@@ -1,0 +1,17 @@
+{
+  "node": {
+    "00ecef2fcd828f370c9b7c780e2a88149a0d95b2cd": {
+      "workers": {
+        "app/(dashboard)/dashboard/page": {
+          "moduleId": 59220,
+          "async": false,
+          "exportedName": "logout",
+          "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts"
+        }
+      },
+      "exportedName": "logout",
+      "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,29 @@
+{
+  "node": {
+    "00ecef2fcd828f370c9b7c780e2a88149a0d95b2cd": {
+      "workers": {
+        "app/(auth)/signup/page": {
+          "moduleId": 69490,
+          "async": false,
+          "exportedName": "logout",
+          "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts"
+        }
+      },
+      "exportedName": "logout",
+      "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts"
+    },
+    "40edf81b9d6ae75333b15677df8bf7fa737cf38ef8": {
+      "workers": {
+        "app/(auth)/signup/page": {
+          "moduleId": 69490,
+          "async": false,
+          "exportedName": "signup",
+          "filename": "Desktop/masterguitar/src/app/(auth)/signup/actions.ts"
+        }
+      },
+      "exportedName": "signup",
+      "filename": "Desktop/masterguitar/src/app/(auth)/signup/actions.ts"
+    }
+  },
+  "edge": {}
+}
