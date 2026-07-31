@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
@@ -23,9 +23,9 @@ export default async function CoursesPage() {
     <div className="container mx-auto p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">Mes cours</h1>
-        <Button asChild>
-          <Link href="/dashboard/courses/new">Nouveau cours</Link>
-        </Button>
+        <Link href="/dashboard/courses/new" className={buttonVariants()}>
+          Nouveau cours
+        </Link>
       </div>
 
       {courses.length === 0 ? (
@@ -35,9 +35,9 @@ export default async function CoursesPage() {
           <p className="text-muted-foreground mb-4">
             Créez votre premier cours pour commencer
           </p>
-          <Button asChild>
-            <Link href="/dashboard/courses/new">Créer un cours</Link>
-          </Button>
+          <Link href="/dashboard/courses/new" className={buttonVariants()}>
+            Créer un cours
+          </Link>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -62,9 +62,12 @@ export default async function CoursesPage() {
                 {course.status === "PUBLISHED" ? "Publié" : "Brouillon"}
               </Badge>
               <div className="flex gap-2 mt-3">
-                <Button asChild variant="outline" size="sm" className="flex-1">
-                  <Link href={`/dashboard/courses/${course.id}`}>Modifier</Link>
-                </Button>
+                <Link
+                  href={`/dashboard/courses/${course.id}`}
+                  className={buttonVariants({ variant: "outline", size: "sm", className: "flex-1" })}
+                >
+                  Modifier
+                </Link>
                 <Button variant="ghost" size="sm">
                   <Trash2 className="size-4" />
                 </Button>

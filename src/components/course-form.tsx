@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -93,9 +93,9 @@ export function CourseForm({ course, action }: CourseFormProps) {
       )}
 
       <div className="flex gap-3 justify-end mt-2">
-        <Button asChild variant="outline" type="button">
-          <Link href="/dashboard/courses">Annuler</Link>
-        </Button>
+        <Link href="/dashboard/courses" className={buttonVariants({ variant: "outline" })}>
+          Annuler
+        </Link>
         <Button type="submit" disabled={isPending}>
           {isPending ? "En cours..." : course ? "Enregistrer" : "Créer le cours"}
         </Button>
