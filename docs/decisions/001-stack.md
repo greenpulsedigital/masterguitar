@@ -1,6 +1,6 @@
 # ADR 001 — Stack technique
 
-- Status: accepted
+- Status: accepted (database section superseded by ADR 002)
 - Date: 2026-07-31
 - Scope: framing
 
