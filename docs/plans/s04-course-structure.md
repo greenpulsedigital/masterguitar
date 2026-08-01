@@ -54,7 +54,7 @@ Branch: `feature/s04-course-structure`
 - Delete: opens `Dialog` for confirmation, calls `deleteModule` action
 - **Verify**: Component renders, TypeScript compiles
 
-### 5. [ ] Create ModuleSection wrapper component
+### 5. [x] Create ModuleSection wrapper component
 - File: `src/components/module-section.tsx`
 - Props: `modules: Module[]`, `courseId: string`
 - Renders: Card with section header ("Modules" + "Ajouter" button), ModuleList or empty state
