@@ -35,7 +35,7 @@ Branch: `feature/s05-video-lessons`
 - Each action: auth check (PROF), ownership check via `lesson.module.course.profId === session.user.id`
 - **Verify**: Actions export correctly, TypeScript compiles
 
-### 3. [ ] Write unit tests for lesson actions
+### 3. [x] Write unit tests for lesson actions
 - File: `src/__tests__/lesson-crud.test.ts`
 - Test `createLesson`: creates with correct order, auth required, ownership required
 - Test `updateLesson`: updates all fields, auth required, ownership required
