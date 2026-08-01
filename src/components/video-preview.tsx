@@ -63,6 +63,7 @@ export function VideoPreview({ url }: VideoPreviewProps) {
     <div className="w-full rounded-lg overflow-hidden" style={{ aspectRatio: "16 / 9" }}>
       <iframe
         src={embedUrl}
+        title="Video preview"
         className="w-full h-full"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen

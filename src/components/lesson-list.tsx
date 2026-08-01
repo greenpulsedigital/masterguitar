@@ -116,6 +116,7 @@ export function LessonList({ lessons, moduleId }: LessonListProps) {
                 size="icon-sm"
                 onClick={() => handleReorder(lesson.id, "up")}
                 disabled={index === 0}
+                aria-label="Déplacer la leçon vers le haut"
               >
                 <ChevronUp className="h-4 w-4" />
               </Button>
@@ -125,6 +126,7 @@ export function LessonList({ lessons, moduleId }: LessonListProps) {
                 size="icon-sm"
                 onClick={() => handleReorder(lesson.id, "down")}
                 disabled={index === items.length - 1}
+                aria-label="Déplacer la leçon vers le bas"
               >
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -145,6 +147,7 @@ export function LessonList({ lessons, moduleId }: LessonListProps) {
               variant="ghost"
               size="icon"
               onClick={() => handleDeleteClick(lesson.id)}
+              aria-label="Supprimer la leçon"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

@@ -153,6 +153,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                     size="icon-sm"
                     onClick={() => handleReorder(module.id, "up")}
                     disabled={index === 0}
+                    aria-label="Déplacer le module vers le haut"
                   >
                     <ChevronUp className="h-4 w-4" />
                   </Button>
@@ -162,6 +163,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                     size="icon-sm"
                     onClick={() => handleReorder(module.id, "down")}
                     disabled={index === items.length - 1}
+                    aria-label="Déplacer le module vers le bas"
                   >
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -208,6 +210,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDeleteClick(module.id)}
+                  aria-label="Supprimer le module"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
