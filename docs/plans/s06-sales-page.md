@@ -59,7 +59,7 @@ Branch: `feature/s06-sales-page`
 - Mobile-first: sticky CTA bar on mobile, sidebar on lg:
 - "Acheter" links to `/checkout/${course.id}` (404 until s07)
 
-### 7. [ ] Handle empty states
+### 7. [x] Handle empty states
 - No modules: show "Le programme sera bientôt disponible"
 - No thumbnail: gradient placeholder `bg-gradient-to-br from-muted to-background`
 - No description: don't show description section
