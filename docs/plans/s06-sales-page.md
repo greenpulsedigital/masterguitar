@@ -47,7 +47,7 @@ Branch: `feature/s06-sales-page`
 - Add Button to toggle status (calls toggleCourseStatus action)
 - Green badge for PUBLISHED, gray for DRAFT
 
-### 6. [ ] Create sales page route and UI
+### 6. [x] Create sales page route and UI
 - Create `src/app/cours/[slug]/page.tsx` (Server Component)
 - Fetch course via getCourseBySlug, call `notFound()` if null
 - Layout per design (docs/designs/s06-sales-page.md):

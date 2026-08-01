@@ -24,6 +24,7 @@ describe("Course Prisma Schema", () => {
     expect(schemaContent).toContain("title")
     expect(schemaContent).toContain("price")
     expect(schemaContent).toContain("profId")
-    expect(schemaContent).toContain("@@unique([profId, slug])")
+    // Slug is now globally unique
+    expect(schemaContent).toContain("slug         String       @unique")
   })
 })
