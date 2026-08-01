@@ -90,7 +90,7 @@ Branch: `feature/s05-video-lessons`
 - Update Module type to include lessons array
 - **Verify**: Lessons data flows to ModuleSection → ModuleList → LessonList
 
-### 9. [ ] Write integration tests for lesson UI flows
+### 9. [x] Write integration tests for lesson UI flows
 - File: `src/__tests__/lesson-integration.test.tsx`
 - Test: add lesson → appears in list
 - Test: edit lesson → opens dialog, saves changes
