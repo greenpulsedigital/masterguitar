@@ -28,7 +28,7 @@ Branch: `feature/s06-sales-page`
 - Format: French locale, Euro symbol (e.g., "49,00 €")
 - Write unit test for formatPrice (edge cases: 0, large amounts, decimals)
 
-### 3. [ ] Create getCourseBySlug query function
+### 3. [x] Create getCourseBySlug query function
 - Create `src/lib/queries/course.ts`
 - Function: `getCourseBySlug(slug: string)` returns Course with modules and prof name
 - Filter: `status: "PUBLISHED"` only
