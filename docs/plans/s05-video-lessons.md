@@ -10,11 +10,11 @@ Branch: `feature/s05-video-lessons`
 **As a** prof **I want** ajouter des leçons vidéo à mes modules **so that** les élèves peuvent apprendre.
 
 ### Acceptance criteria
-- [ ] Le prof peut ajouter une leçon à un module
-- [ ] La leçon a un titre, une description, une URL vidéo externe
-- [ ] Le prof peut réordonner les leçons dans un module
-- [ ] Le prof peut modifier ou supprimer une leçon
-- [ ] La vidéo s'affiche en preview dans l'éditeur
+- [x] Le prof peut ajouter une leçon à un module
+- [x] La leçon a un titre, une description, une URL vidéo externe
+- [x] Le prof peut réordonner les leçons dans un module
+- [x] Le prof peut modifier ou supprimer une leçon
+- [x] La vidéo s'affiche en preview dans l'éditeur
 
 ## Tasks (ordered)
 
@@ -100,12 +100,12 @@ Branch: `feature/s05-video-lessons`
 - Test: video preview → shows iframe for valid URL, placeholder for empty/invalid
 - **Verify**: `npm test` — all tests pass
 
-### 10. [ ] Manual verification of acceptance criteria
-- [ ] Add lesson: expand module, click "Ajouter", edit dialog opens, save
-- [ ] Edit lesson: click title, modify fields, video preview works, save
-- [ ] Reorder: up/down buttons work, disabled at boundaries
-- [ ] Delete: confirmation dialog, lesson removed
-- [ ] Video preview: YouTube/Vimeo URLs embed correctly
+### 10. [x] Manual verification of acceptance criteria
+- [x] Add lesson: expand module, click "Ajouter", edit dialog opens, save
+- [x] Edit lesson: click title, modify fields, video preview works, save
+- [x] Reorder: up/down buttons work, disabled at boundaries
+- [x] Delete: confirmation dialog, lesson removed
+- [x] Video preview: YouTube/Vimeo URLs embed correctly
 - **Verify**: All criteria met via integration tests + manual spot check
 
 ## Files touched
@@ -134,10 +134,10 @@ Branch: `feature/s05-video-lessons`
 
 ## Definition of Done
 
-- [ ] All 10 tasks completed
-- [ ] `npm test` passes (all lesson tests + existing tests)
-- [ ] `npm run build` succeeds
-- [ ] Acceptance criteria verified
-- [ ] Mobile responsive (expand/collapse works on mobile)
-- [ ] No TypeScript errors
-- [ ] No new ESLint warnings
+- [x] All 10 tasks completed
+- [x] `npm test` passes (all lesson tests + existing tests)
+- [x] `npm run build` succeeds
+- [x] Acceptance criteria verified
+- [x] Mobile responsive (expand/collapse works on mobile)
+- [x] No TypeScript errors
+- [x] No new ESLint warnings
