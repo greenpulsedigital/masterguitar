@@ -344,3 +344,196 @@ export async function reorderModule(formData: FormData) {
     return { error: "Erreur lors du réordonnancement du module" }
   }
 }
+
+// Lesson actions
+
+export async function createLesson(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const moduleId = formData.get("moduleId") as string
+
+  // Check ownership
+  const module = await prisma.module.findUnique({
+    where: { id: moduleId },
+    include: { course: true, lessons: true },
+  })
+
+  if (!module) {
+    return { error: "Module introuvable" }
+  }
+
+  if (module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier ce module" }
+  }
+
+  // Calculate next order value
+  const maxOrder = module.lessons.length > 0
+    ? Math.max(...module.lessons.map(l => l.order))
+    : 0
+  const order = maxOrder + 1
+
+  try {
+    await prisma.lesson.create({
+      data: {
+        title: "Nouvelle leçon",
+        order,
+        moduleId,
+      },
+    })
+
+    redirect(`/dashboard/courses/${module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la création de la leçon" }
+  }
+}
+
+export async function updateLesson(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+  const title = formData.get("title") as string
+  const description = (formData.get("description") as string) || ""
+  const videoUrl = (formData.get("videoUrl") as string) || ""
+
+  if (!title || title.trim() === "") {
+    return { error: "Le titre est requis" }
+  }
+
+  // Check ownership
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    include: { module: { include: { course: true } } },
+  })
+
+  if (!lesson) {
+    return { error: "Leçon introuvable" }
+  }
+
+  if (lesson.module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier cette leçon" }
+  }
+
+  try {
+    await prisma.lesson.update({
+      where: { id },
+      data: {
+        title,
+        description: description || null,
+        videoUrl: videoUrl || null,
+      },
+    })
+
+    redirect(`/dashboard/courses/${lesson.module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la mise à jour de la leçon" }
+  }
+}
+
+export async function deleteLesson(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+
+  // Check ownership
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    include: { module: { include: { course: true } } },
+  })
+
+  if (!lesson) {
+    return { error: "Leçon introuvable" }
+  }
+
+  if (lesson.module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à supprimer cette leçon" }
+  }
+
+  try {
+    await prisma.lesson.delete({
+      where: { id },
+    })
+
+    redirect(`/dashboard/courses/${lesson.module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la suppression de la leçon" }
+  }
+}
+
+export async function reorderLesson(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+  const direction = formData.get("direction") as "up" | "down"
+
+  // Get lesson with module and all lessons
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    include: {
+      module: {
+        include: {
+          course: true,
+          lessons: {
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+    },
+  })
+
+  if (!lesson) {
+    return { error: "Leçon introuvable" }
+  }
+
+  if (lesson.module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier cette leçon" }
+  }
+
+  const lessons = lesson.module.lessons
+  const currentIndex = lessons.findIndex(l => l.id === id)
+
+  // Check boundaries
+  if (direction === "up" && currentIndex === 0) {
+    return { error: "La leçon est déjà en première position" }
+  }
+
+  if (direction === "down" && currentIndex === lessons.length - 1) {
+    return { error: "La leçon est déjà en dernière position" }
+  }
+
+  // Find adjacent lesson
+  const adjacentIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+  const adjacentLesson = lessons[adjacentIndex]
+
+  // Swap orders
+  try {
+    await prisma.lesson.update({
+      where: { id: lesson.id },
+      data: { order: adjacentLesson.order },
+    })
+
+    await prisma.lesson.update({
+      where: { id: adjacentLesson.id },
+      data: { order: lesson.order },
+    })
+
+    redirect(`/dashboard/courses/${lesson.module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors du réordonnancement de la leçon" }
+  }
+}

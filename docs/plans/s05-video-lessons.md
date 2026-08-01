@@ -26,7 +26,7 @@ Branch: `feature/s05-video-lessons`
 - Run migration: `npx prisma migrate dev --name add-lesson-model`
 - **Verify**: Prisma client regenerates, `prisma.lesson.*` methods available
 
-### 2. [ ] Create lesson server actions
+### 2. [x] Create lesson server actions
 - File: `src/app/(dashboard)/dashboard/courses/actions.ts`
 - Add `createLesson(formData: FormData)` — creates lesson with title "Nouvelle leçon", order = max + 1
 - Add `updateLesson(formData: FormData)` — updates title, description, videoUrl; validates ownership
