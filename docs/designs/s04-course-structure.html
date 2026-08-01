@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>s04-course-structure — Mockup</title>
+  <style>
+    /* Design System Tokens */
+    :root {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.205 0 0);
+      --card-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --border: oklch(1 0 0 / 10%);
+      --primary: oklch(0.65 0.25 250);
+      --primary-foreground: oklch(0.985 0 0);
+      --destructive: oklch(0.704 0.191 22.216);
+      --ring: oklch(0.65 0.25 250);
+      --radius: 0.625rem;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    @media (min-width: 768px) {
+      body { padding: 24px; }
+    }
+
+    .container {
+      max-width: 672px;
+      margin: 0 auto;
+    }
+
+    /* Page header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 30px;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-primary:hover { opacity: 0.9; }
+
+    .btn-destructive {
+      background: var(--destructive);
+      color: var(--primary-foreground);
+    }
+
+    .btn-destructive-sm {
+      background: transparent;
+      color: var(--muted-foreground);
+      padding: 6px;
+    }
+
+    .btn-destructive-sm:hover { color: var(--destructive); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-foreground);
+      padding: 6px;
+    }
+
+    .btn-ghost:hover { background: var(--muted); color: var(--foreground); }
+
+    .btn-ghost:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-icon { width: 32px; height: 32px; padding: 0; }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 24px;
+    }
+
+    @media (min-width: 768px) {
+      .card { padding: 24px; }
+    }
+
+    /* Placeholder for CourseForm */
+    .course-form-placeholder {
+      background: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      text-align: center;
+      color: var(--muted-foreground);
+      font-size: 14px;
+    }
+
+    /* Section header */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    /* Module list */
+    .module-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Module row */
+    .module-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+
+    .module-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .module-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .module-title:hover {
+      color: var(--primary);
+    }
+
+    /* Inline edit */
+    .module-input {
+      flex: 1;
+      background: var(--background);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 14px;
+      color: var(--foreground);
+      outline: none;
+    }
+
+    .module-input:focus {
+      box-shadow: 0 0 0 2px var(--ring);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .empty-description {
+      font-size: 14px;
+      color: var(--muted-foreground);
+    }
+
+    /* SVG icons inline */
+    .icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    /* Demo label */
+    .demo-label {
+      font-size: 12px;
+      color: var(--primary);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Modifier le cours</h1>
+      <button class="btn btn-destructive">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Supprimer
+      </button>
+    </div>
+
+    <!-- CourseForm placeholder -->
+    <div class="course-form-placeholder">
+      [CourseForm — existing component]<br>
+      <small>Titre, description, prix, thumbnail...</small>
+    </div>
+
+    <!-- MODULES SECTION -->
+    <div class="card">
+      <p class="demo-label">State: With modules</p>
+
+      <div class="section-header">
+        <h2 class="section-title">Modules</h2>
+        <button class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter un module
+        </button>
+      </div>
+
+      <div class="module-list">
+        <!-- Module 1 - First (up disabled) -->
+        <div class="module-row">
+          <div class="module-controls">
+            <button class="btn btn-ghost btn-icon" disabled title="Monter">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon" title="Descendre">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <span class="module-title">Introduction à la guitare</span>
+          <button class="btn btn-destructive-sm btn-icon" title="Supprimer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+
+        <!-- Module 2 - In edit mode -->
+        <div class="module-row">
+          <div class="module-controls">
+            <button class="btn btn-ghost btn-icon" title="Monter">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon" title="Descendre">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <input class="module-input" type="text" value="Les accords de base" autofocus>
+          <button class="btn btn-destructive-sm btn-icon" title="Supprimer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+
+        <!-- Module 3 - Last (down disabled) -->
+        <div class="module-row">
+          <div class="module-controls">
+            <button class="btn btn-ghost btn-icon" title="Monter">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon" disabled title="Descendre">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <span class="module-title">Rythmique et strumming</span>
+          <button class="btn btn-destructive-sm btn-icon" title="Supprimer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- EMPTY STATE -->
+    <div class="card">
+      <p class="demo-label">State: Empty</p>
+
+      <div class="section-header">
+        <h2 class="section-title">Modules</h2>
+        <button class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter un module
+        </button>
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <p class="empty-title">Aucun module</p>
+        <p class="empty-description">Ajoutez des modules pour structurer votre cours.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

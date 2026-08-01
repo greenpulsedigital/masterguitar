@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import { CourseForm } from "@/components/course-form"
+import { ModuleSection } from "@/components/module-section"
 import { updateCourse, deleteCourse } from "../actions"
 import {
   Dialog,
@@ -30,6 +31,11 @@ export default async function EditCoursePage({
 
   const course = await prisma.course.findUnique({
     where: { id },
+    include: {
+      modules: {
+        orderBy: { order: "asc" },
+      },
+    },
   })
 
   if (!course) {
@@ -46,7 +52,10 @@ export default async function EditCoursePage({
         <h1 className="text-3xl font-semibold">Modifier le cours</h1>
         <DeleteCourseDialog courseId={course.id} courseTitle={course.title} />
       </div>
-      <CourseForm course={course} action={updateCourse} />
+      <div className="space-y-6">
+        <CourseForm course={course} action={updateCourse} />
+        <ModuleSection modules={course.modules} courseId={course.id} />
+      </div>
     </div>
   )
 }
