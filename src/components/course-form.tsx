@@ -33,6 +33,7 @@ export function CourseForm({ course, action }: CourseFormProps) {
 
   return (
     <form action={handleSubmit} className="flex flex-col gap-4">
+      {course && <input type="hidden" name="id" value={course.id} />}
       <div>
         <Label htmlFor="title">Titre</Label>
         <Input

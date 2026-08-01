@@ -1,6 +1,9 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button, buttonVariants } from "@/components/ui/button"
+import Link from "next/link"
+import { BookOpen } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -16,11 +19,24 @@ export default async function DashboardPage() {
         Bienvenue, {session.user.email}
       </p>
 
-      <Card className="p-6">
-        <p className="text-muted-foreground">
-          Vos cours apparaîtront ici.
-        </p>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="size-5" />
+              Mes cours
+            </CardTitle>
+            <CardDescription>
+              Gérez vos cours et leur contenu
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/courses" className={buttonVariants()}>
+              Voir mes cours
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
