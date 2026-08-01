@@ -54,7 +54,7 @@ Branch: `feature/s05-video-lessons`
 - Invalid URL state: Video icon + "URL invalide" in `text-destructive`
 - **Verify**: Component renders all three states correctly
 
-### 5. [ ] Create LessonList client component
+### 5. [x] Create LessonList client component
 - File: `src/components/lesson-list.tsx`
 - Props: `lessons: Lesson[]`, `moduleId: string`
 - `"use client"` — manages local state for optimistic UI
@@ -65,7 +65,7 @@ Branch: `feature/s05-video-lessons`
 - Empty state: Video icon + "Aucune leçon" centered
 - **Verify**: Component renders, TypeScript compiles
 
-### 6. [ ] Create LessonEditDialog component
+### 6. [x] Create LessonEditDialog component
 - File: `src/components/lesson-edit-dialog.tsx`
 - Props: `lesson: Lesson`, `open: boolean`, `onOpenChange: (open: boolean) => void`, `onSave: () => void`
 - `"use client"` — manages form state
