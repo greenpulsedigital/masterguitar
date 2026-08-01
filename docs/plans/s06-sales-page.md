@@ -18,7 +18,7 @@ Branch: `feature/s06-sales-page`
 
 ## Tasks (ordered)
 
-### 1. [ ] Schema migration: make slug globally unique
+### 1. [x] Schema migration: make slug globally unique
 - Modify `prisma/schema.prisma`: change `@@unique([profId, slug])` to `slug String @unique`
 - Run `npx prisma migrate dev --name global-slug`
 - Write test: verify slug uniqueness constraint works
