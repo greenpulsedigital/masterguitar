@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":["file:///Users/freydavid/Desktop/masterguitar/src/app/favicon.ico.mjs%20%28structured%20image%20object%29"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 256, height: 256 }\n"],"names":["src","width","height"],"mappings":";;;;AAAA;;uCACe;IAAEA,KAAAA,qKAAG;IAAEC,OAAO;IAAKC,QAAQ;AAAI"}},
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///Users/freydavid/Desktop/masterguitar/src/app/page.tsx"],"sourcesContent":["export default function Home() {\n  return (\n    <div className=\"flex flex-col items-center justify-center min-h-[60vh] text-center\">\n      <h1 className=\"text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl\">\n        Bienvenue sur MasterGuitar\n      </h1>\n      <p className=\"mt-4 text-lg text-muted-foreground max-w-2xl\">\n        Plateforme d'apprentissage de la guitare en ligne\n      </p>\n    </div>\n  );\n}\n"],"names":["Home","className"],"mappings":";;;;;;AAAe,SAASA;IACtB,qBACE,yQAAC;QAAIC,WAAU;;0BACb,yQAAC;gBAAGA,WAAU;0BAA4E;;;;;;0BAG1F,yQAAC;gBAAEA,WAAU;0BAA+C;;;;;;;;;;;;AAKlE"}}]
+}

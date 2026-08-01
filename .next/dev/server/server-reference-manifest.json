@@ -1,0 +1,18 @@
+{
+  "node": {
+    "005de017f3d40f67a1371ef420c40d3db5421dbc8c": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/Desktop/masterguitar/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/Desktop/masterguitar/src/app/(auth)/logout/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "logout",
+          "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts"
+        }
+      },
+      "filename": "Desktop/masterguitar/src/app/(auth)/logout/actions.ts",
+      "exportedName": "logout"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "cspNBGMLS7slzMA6S7OSEN4Pym5y3/jPR1y7ntPur0s="
+}

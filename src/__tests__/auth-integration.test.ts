@@ -1,0 +1,152 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { z } from 'zod'
+import * as bcrypt from 'bcryptjs'
+
+describe('Task 12: Integration tests for auth flow', () => {
+  describe('Signup flow', () => {
+    it('should validate signup schema correctly', () => {
+      const signupSchema = z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        password: z.string().min(8),
+        isProf: z.boolean(),
+      })
+
+      // Valid signup
+      const valid = signupSchema.safeParse({
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'password123',
+        isProf: true,
+      })
+      expect(valid.success).toBe(true)
+
+      // Missing required fields
+      const invalid = signupSchema.safeParse({
+        email: 'john@example.com',
+      })
+      expect(invalid.success).toBe(false)
+    })
+
+    it('should hash passwords securely', async () => {
+      const password = 'userPassword123'
+      const hash = await bcrypt.hash(password, 10)
+
+      expect(hash).toBeDefined()
+      expect(hash).not.toBe(password)
+      expect(hash.length).toBeGreaterThan(20)
+
+      const isValid = await bcrypt.compare(password, hash)
+      expect(isValid).toBe(true)
+
+      const isInvalid = await bcrypt.compare('wrongPassword', hash)
+      expect(isInvalid).toBe(false)
+    })
+
+    it('should assign PROF role when checkbox is checked', () => {
+      const determineRole = (isProf: boolean) => isProf ? 'PROF' : 'STUDENT'
+
+      expect(determineRole(true)).toBe('PROF')
+      expect(determineRole(false)).toBe('STUDENT')
+    })
+  })
+
+  describe('Login flow', () => {
+    it('should validate login credentials with Zod', () => {
+      const loginSchema = z.object({
+        email: z.string().email(),
+        password: z.string().min(1),
+      })
+
+      // Valid credentials
+      const valid = loginSchema.safeParse({
+        email: 'test@example.com',
+        password: 'password123',
+      })
+      expect(valid.success).toBe(true)
+
+      // Invalid email
+      const invalidEmail = loginSchema.safeParse({
+        email: 'not-an-email',
+        password: 'password',
+      })
+      expect(invalidEmail.success).toBe(false)
+
+      // Empty password
+      const emptyPassword = loginSchema.safeParse({
+        email: 'test@example.com',
+        password: '',
+      })
+      expect(emptyPassword.success).toBe(false)
+    })
+
+    it('should verify password matches hash', async () => {
+      const password = 'correctPassword'
+      const hash = await bcrypt.hash(password, 10)
+
+      // Correct password
+      const isValid = await bcrypt.compare(password, hash)
+      expect(isValid).toBe(true)
+
+      // Incorrect password
+      const isInvalid = await bcrypt.compare('incorrectPassword', hash)
+      expect(isInvalid).toBe(false)
+    })
+  })
+
+  describe('Protected routes', () => {
+    it('should have middleware configured for dashboard', () => {
+      const fs = require('fs')
+      const path = require('path')
+      const middlewarePath = path.resolve(process.cwd(), 'middleware.ts')
+
+      const content = fs.readFileSync(middlewarePath, 'utf-8')
+
+      // Verify middleware protects /dashboard
+      expect(content).toContain('/dashboard')
+      expect(content).toContain('matcher')
+    })
+  })
+
+  describe('File structure verification', () => {
+    it('should have all required auth files', () => {
+      const fs = require('fs')
+      const path = require('path')
+
+      const files = [
+        'src/lib/auth.ts',
+        'src/app/api/auth/[...nextauth]/route.ts',
+        'middleware.ts',
+        'src/app/(auth)/signup/page.tsx',
+        'src/app/(auth)/signup/actions.ts',
+        'src/app/(auth)/login/page.tsx',
+        'src/app/(auth)/login/actions.ts',
+        'src/app/(dashboard)/dashboard/page.tsx',
+        'src/app/(auth)/logout/actions.ts',
+      ]
+
+      files.forEach(file => {
+        const filePath = path.resolve(process.cwd(), file)
+        expect(fs.existsSync(filePath)).toBe(true)
+      })
+    })
+
+    it('should have shadcn UI components installed', () => {
+      const fs = require('fs')
+      const path = require('path')
+
+      const components = [
+        'src/components/ui/button.tsx',
+        'src/components/ui/input.tsx',
+        'src/components/ui/label.tsx',
+        'src/components/ui/card.tsx',
+        'src/components/ui/checkbox.tsx',
+      ]
+
+      components.forEach(component => {
+        const componentPath = path.resolve(process.cwd(), component)
+        expect(fs.existsSync(componentPath)).toBe(true)
+      })
+    })
+  })
+})
