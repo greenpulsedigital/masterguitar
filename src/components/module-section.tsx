@@ -6,11 +6,21 @@ import { Button } from "@/components/ui/button"
 import { ModuleList } from "@/components/module-list"
 import { createModule } from "@/app/(dashboard)/dashboard/courses/actions"
 
+interface Lesson {
+  id: string
+  title: string
+  description: string | null
+  videoUrl: string | null
+  order: number
+  moduleId: string
+}
+
 interface Module {
   id: string
   title: string
   order: number
   courseId: string
+  lessons: Lesson[]
 }
 
 interface ModuleSectionProps {
