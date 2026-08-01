@@ -1,6 +1,6 @@
 # Review Report - Story s05-video-lessons
 
-> Fresh-context review. Each issue classified: critical / major / minor.
+> Fresh-context review (post-fix). Each issue classified: critical / major / minor.
 > Diff reviewed: `git diff main...feature/s05-video-lessons`
 
 ## Plan compliance
@@ -78,7 +78,7 @@
 
 ## Regressions
 
-- [x] No impact on existing code paths (for legitimate story files)
+- [x] No impact on existing code paths
 
 **Changes to existing files**:
 - `prisma/schema.prisma`: Added Lesson model, lessons relation to Module — non-breaking
@@ -89,42 +89,33 @@
 
 ---
 
+## Previous Review Findings (Fixed)
+
+| Severity | File | Issue | Status |
+|----------|------|-------|--------|
+| ~~critical~~ | Multiple files with " 2" and " 3" suffixes | 172 duplicate junk files breaking build | **Fixed** — removed in commit `98723f5` |
+| ~~minor~~ | `src/components/video-preview.tsx` | iframe lacks `title` attribute | **Fixed** — added `title="Video preview"` |
+| ~~minor~~ | `src/components/lesson-list.tsx` | Icon buttons lack `aria-label` | **Fixed** — all buttons have aria-labels |
+
 ## Current Findings
 
 | Severity | File | Issue |
 |----------|------|-------|
-| **critical** | `src/lib 2/`, `.claude/*`, etc. | **Junk duplicate files break the build.** The branch contains directories/files with " 2" suffixes (copy artifacts) that TypeScript tries to compile, causing build failure: `Cannot find module '@/generated/prisma'` in `src/lib 2/prisma 2.ts`. Must be deleted. |
 | **minor** | `src/components/module-list.tsx:172-178` | Expand/collapse button lacks `aria-label` (unlike reorder/delete buttons which have them). |
 | **minor** | `src/components/video-preview.tsx:33` | Uses inline `style={{ aspectRatio: "16 / 9" }}` instead of Tailwind's `aspect-video`. Works correctly but inconsistent with Tailwind preference. |
-
-### Critical Issue Details
-
-Build error:
-```
-./src/lib 2/prisma 2.ts:1:30
-Type error: Cannot find module '@/generated/prisma' or its corresponding type declarations.
-```
-
-Duplicate directories to remove:
-- `src/lib 2/`
-- `.claude/skills/*` files with " 2" and " 3" suffixes
-- `.claude/commands/*` files with " 2" and " 3" suffixes
-- `.claude/agents/*` files with " 2" and " 3" suffixes
-
-These appear to be accidental copy artifacts that were committed to the branch.
 
 ---
 
 ## Verdict
 
-The **story implementation itself** (schema, actions, components, tests) is correct, complete, and meets all acceptance criteria:
+All acceptance criteria verified:
 - [x] Le prof peut ajouter une leçon à un module
 - [x] La leçon a un titre, une description, une URL vidéo externe
 - [x] Le prof peut réordonner les leçons dans un module
 - [x] Le prof peut modifier ou supprimer une leçon
 - [x] La vidéo s'affiche en preview dans l'éditeur
 
-**However**, the branch contains junk files that break the build. These must be removed before shipping.
+Build passes. 151 tests pass. The critical issue (duplicate files) has been fixed. Only minor style/UX findings remain.
 
-Max severity: critical
-Ship allowed: no
+Max severity: minor
+Ship allowed: yes
