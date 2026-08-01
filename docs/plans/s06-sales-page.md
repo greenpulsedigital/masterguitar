@@ -10,11 +10,11 @@ Branch: `feature/s06-sales-page`
 **As a** prof **I want** une page de vente publique pour mon cours **so that** les élèves potentiels peuvent découvrir et acheter.
 
 ### Acceptance criteria
-- [ ] Chaque cours publié a une URL publique `/cours/[slug]`
-- [ ] La page affiche: titre, description, thumbnail, prix, curriculum (modules)
-- [ ] Un bouton "Acheter" est visible
-- [ ] La page est mobile-first et design "studio"
-- [ ] Un cours en draft n'est pas accessible publiquement
+- [x] Chaque cours publié a une URL publique `/cours/[slug]`
+- [x] La page affiche: titre, description, thumbnail, prix, curriculum (modules)
+- [x] Un bouton "Acheter" est visible
+- [x] La page est mobile-first et design "studio"
+- [x] Un cours en draft n'est pas accessible publiquement
 
 ## Tasks (ordered)
 
@@ -108,15 +108,15 @@ Branch: `feature/s06-sales-page`
 
 ## Definition of Done
 
-- [ ] All acceptance criteria verified:
+- [x] All acceptance criteria verified:
   - `/cours/[slug]` route works for published courses
   - Page displays: title, description, thumbnail, prix, modules
   - "Acheter" button visible and links correctly
   - Mobile-first layout with sticky CTA
   - Draft courses return 404
-- [ ] Schema migration applied successfully
-- [ ] All new tests pass
-- [ ] No regression on existing tests (course CRUD, modules)
-- [ ] TypeScript compiles without errors
-- [ ] Build passes (`npm run build`)
+- [x] Schema migration applied successfully
+- [x] All new tests pass
+- [x] No regression on existing tests (course CRUD, modules)
+- [x] TypeScript compiles without errors
+- [x] Build passes (`npm run build`)
 - [ ] Review passed (no critical issues)
