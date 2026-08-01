@@ -48,5 +48,15 @@ model Course {
   profId       String
   prof         User         @relation(fields: [profId], references: [id])
 
+  modules      Module[]
+
   @@unique([profId, slug])
+}
+
+model Module {
+  id       String @id @default(cuid())
+  title    String
+  order    Int
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }

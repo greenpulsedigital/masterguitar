@@ -18,7 +18,7 @@ Branch: `feature/s04-course-structure`
 
 ## Tasks (ordered)
 
-### 1. [ ] Add Module model to Prisma schema
+### 1. [x] Add Module model to Prisma schema
 - Add `Module` model with fields: `id`, `title`, `order`, `courseId`
 - Add `modules` relation to `Course` model
 - Configure `onDelete: Cascade` on the relation
