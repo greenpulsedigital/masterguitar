@@ -64,7 +64,7 @@ Branch: `feature/s06-sales-page`
 - No thumbnail: gradient placeholder `bg-gradient-to-br from-muted to-background`
 - No description: don't show description section
 
-### 8. [ ] Write integration tests for sales page
+### 8. [x] Write integration tests for sales page
 - Create `src/__tests__/sales-page.test.tsx`
 - Test: renders course data correctly
 - Test: 404 for non-existent slug
