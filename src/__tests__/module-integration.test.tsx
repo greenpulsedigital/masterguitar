@@ -218,5 +218,18 @@ describe("Module UI Integration", () => {
 
       expect(screen.getByText("Ajouter un module")).toBeInTheDocument()
     })
+
+    it("should call createModule action when add button is clicked", async () => {
+      const { createModule } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      render(<ModuleSection modules={mockModules} courseId="course-1" />)
+
+      const addButton = screen.getByText("Ajouter un module")
+      fireEvent.click(addButton)
+
+      await waitFor(() => {
+        expect(createModule).toHaveBeenCalled()
+      })
+    })
   })
 })

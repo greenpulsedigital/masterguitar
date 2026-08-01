@@ -1,3 +1,5 @@
+"use client"
+
 import { Package } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,12 +19,16 @@ interface ModuleSectionProps {
 }
 
 export function ModuleSection({ modules, courseId }: ModuleSectionProps) {
+  async function handleCreateModule(formData: FormData) {
+    await createModule(formData)
+  }
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Modules</CardTitle>
-          <form action={createModule}>
+          <form action={handleCreateModule}>
             <input type="hidden" name="courseId" value={courseId} />
             <Button type="submit" size="sm">
               Ajouter un module
