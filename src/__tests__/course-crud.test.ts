@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { generateSlug } from "@/lib/slug"
 
-// Mock auth
+// Mock auth - type as function returning Promise<Session | null>
 vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
+  auth: vi.fn(() => Promise.resolve(null)),
 }))
 
 // Mock next/navigation
@@ -127,7 +127,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should redirect to login if not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null)
+      vi.mocked(auth).mockResolvedValue(null as any)
 
       const formData = new FormData()
       formData.set("title", "Test Course")
