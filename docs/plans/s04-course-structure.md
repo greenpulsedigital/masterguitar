@@ -44,7 +44,7 @@ Branch: `feature/s04-course-structure`
 - Mock pattern: follow `course-crud.test.ts` — mock auth, prisma, redirect
 - **Verify**: `npm test` — all module tests pass
 
-### 4. [ ] Create ModuleList client component
+### 4. [x] Create ModuleList client component
 - File: `src/components/module-list.tsx`
 - Props: `modules: Module[]`, `courseId: string`
 - `"use client"` — manages local state for optimistic UI
