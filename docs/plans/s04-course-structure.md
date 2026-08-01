@@ -62,7 +62,7 @@ Branch: `feature/s04-course-structure`
 - "Ajouter un module" button: calls `createModule` action via form
 - **Verify**: Component renders both states (empty/populated)
 
-### 6. [ ] Integrate modules into course edit page
+### 6. [x] Integrate modules into course edit page
 - File: `src/app/(dashboard)/dashboard/courses/[id]/page.tsx`
 - Fetch course with modules: `include: { modules: { orderBy: { order: 'asc' } } }`
 - Add `<ModuleSection modules={course.modules} courseId={course.id} />` below `<CourseForm>`
