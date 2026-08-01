@@ -44,7 +44,7 @@ Branch: `feature/s05-video-lessons`
 - Mock pattern: follow `module-crud.test.ts` — mock auth, prisma, redirect
 - **Verify**: `npm test` — all lesson tests pass
 
-### 4. [ ] Create VideoPreview component
+### 4. [x] Create VideoPreview component
 - File: `src/components/video-preview.tsx`
 - Props: `url: string | null | undefined`
 - Parses YouTube URLs (`youtube.com/watch?v=`, `youtu.be/`) to extract video ID
