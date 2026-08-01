@@ -75,7 +75,7 @@ Branch: `feature/s05-video-lessons`
 - Dialog from shadcn/ui, Label for field labels
 - **Verify**: Dialog renders with form, video preview works
 
-### 7. [ ] Add expand/collapse to ModuleList
+### 7. [x] Add expand/collapse to ModuleList
 - File: `src/components/module-list.tsx`
 - Add `expandedModules: Set<string>` local state
 - Add expand/collapse chevron button (ChevronRight/ChevronDown)
@@ -84,7 +84,7 @@ Branch: `feature/s05-video-lessons`
 - "Ajouter" button triggers createLesson action for that module
 - **Verify**: Modules expand/collapse, lessons appear when expanded
 
-### 8. [ ] Update course edit page to fetch lessons
+### 8. [x] Update course edit page to fetch lessons
 - File: `src/app/(dashboard)/dashboard/courses/[id]/page.tsx`
 - Update Prisma query: `include: { modules: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } } }`
 - Update Module type to include lessons array

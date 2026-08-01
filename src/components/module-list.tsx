@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronUp, ChevronDown, Trash2 } from "lucide-react"
+import { ChevronUp, ChevronDown, ChevronRight, Trash2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,13 +12,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { updateModule, deleteModule, reorderModule } from "@/app/(dashboard)/dashboard/courses/actions"
+import { updateModule, deleteModule, reorderModule, createLesson } from "@/app/(dashboard)/dashboard/courses/actions"
+import { LessonList } from "@/components/lesson-list"
+
+interface Lesson {
+  id: string
+  title: string
+  description: string | null
+  videoUrl: string | null
+  order: number
+  moduleId: string
+}
 
 interface Module {
   id: string
   title: string
   order: number
   courseId: string
+  lessons: Lesson[]
 }
 
 interface ModuleListProps {
@@ -32,6 +43,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
   const [editingTitle, setEditingTitle] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null)
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
 
   const handleStartEdit = (module: Module) => {
     setEditingId(module.id)
@@ -105,72 +117,122 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
     setModuleToDelete(null)
   }
 
+  const toggleExpanded = (moduleId: string) => {
+    setExpandedModules(prev => {
+      const next = new Set(prev)
+      if (next.has(moduleId)) {
+        next.delete(moduleId)
+      } else {
+        next.add(moduleId)
+      }
+      return next
+    })
+  }
+
+  const handleAddLesson = async (moduleId: string) => {
+    const formData = new FormData()
+    formData.set("moduleId", moduleId)
+
+    await createLesson(formData)
+  }
+
   return (
     <>
       <div className="space-y-2">
-        {items.map((module, index) => (
-          <div
-            key={module.id}
-            className="flex items-center gap-2 p-3 border rounded-lg bg-card"
-          >
-            <div className="flex flex-col gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleReorder(module.id, "up")}
-                disabled={index === 0}
-              >
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => handleReorder(module.id, "down")}
-                disabled={index === items.length - 1}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
+        {items.map((module, index) => {
+          const isExpanded = expandedModules.has(module.id)
+          const ExpandIcon = isExpanded ? ChevronDown : ChevronRight
 
-            <div className="flex-1">
-              {editingId === module.id ? (
-                <Input
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  onBlur={() => handleSaveEdit(module.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSaveEdit(module.id)
-                    } else if (e.key === "Escape") {
-                      handleCancelEdit()
-                    }
-                  }}
-                  autoFocus
-                  className="h-8"
-                />
-              ) : (
-                <button
+          return (
+            <div key={module.id} className="border rounded-lg bg-card">
+              <div className="flex items-center gap-2 p-3">
+                <div className="flex flex-col gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleReorder(module.id, "up")}
+                    disabled={index === 0}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleReorder(module.id, "down")}
+                    disabled={index === items.length - 1}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Button
                   type="button"
-                  onClick={() => handleStartEdit(module)}
-                  className="text-left w-full hover:text-primary transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleExpanded(module.id)}
                 >
-                  {module.title}
-                </button>
+                  <ExpandIcon className="h-4 w-4" />
+                </Button>
+
+                <div className="flex-1">
+                  {editingId === module.id ? (
+                    <Input
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => handleSaveEdit(module.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleSaveEdit(module.id)
+                        } else if (e.key === "Escape") {
+                          handleCancelEdit()
+                        }
+                      }}
+                      autoFocus
+                      className="h-8"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(module)}
+                      className="text-left w-full hover:text-primary transition-colors"
+                    >
+                      {module.title}
+                    </button>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteClick(module.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {isExpanded && (
+                <div className="px-3 pb-3 border-t">
+                  <div className="flex items-center justify-between py-3">
+                    <h4 className="text-sm font-medium">Leçons</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleAddLesson(module.id)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Ajouter
+                    </Button>
+                  </div>
+                  <LessonList lessons={module.lessons} moduleId={module.id} />
+                </div>
               )}
             </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDeleteClick(module.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
