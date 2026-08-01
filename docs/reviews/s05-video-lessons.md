@@ -1,6 +1,6 @@
 # Review Report - Story s05-video-lessons
 
-> Fresh-context review (post-fix). Each issue classified: critical / major / minor.
+> Fresh-context review (final). Each issue classified: critical / major / minor.
 > Diff reviewed: `git diff main...feature/s05-video-lessons`
 
 ## Plan compliance
@@ -86,18 +86,20 @@
 - `module-section.tsx`: Updated Module interface to include lessons — required for data flow
 - `actions.ts`: Added lesson actions at end of file — no modification to existing actions
 - `page.tsx` (course edit): Updated query include — only adds data
+- `module-integration.test.tsx`: Added `lessons: []` to mock modules — required for interface compatibility
 
 ---
 
-## Previous Review Findings (Fixed)
+## All Review Findings (Fixed)
 
 | Severity | File | Issue | Status |
 |----------|------|-------|--------|
-| ~~critical~~ | Multiple files with " 2" and " 3" suffixes | 172 duplicate junk files breaking build | **Fixed** — removed in commit `98723f5` |
+| ~~critical~~ | Multiple files with " 2" and " 3" suffixes | 172 duplicate junk files breaking build | **Fixed** — commit `98723f5` |
+| ~~critical~~ | `src/__tests__/module-integration.test.tsx` | TypeScript errors — mock modules missing `lessons` property | **Fixed** — added `lessons: []` |
 | ~~minor~~ | `src/components/video-preview.tsx` | iframe lacks `title` attribute | **Fixed** — added `title="Video preview"` |
 | ~~minor~~ | `src/components/lesson-list.tsx` | Icon buttons lack `aria-label` | **Fixed** — all buttons have aria-labels |
 
-## Current Findings
+## Remaining Minor Issues (non-blocking)
 
 | Severity | File | Issue |
 |----------|------|-------|
@@ -115,7 +117,7 @@ All acceptance criteria verified:
 - [x] Le prof peut modifier ou supprimer une leçon
 - [x] La vidéo s'affiche en preview dans l'éditeur
 
-Build passes. 151 tests pass. The critical issue (duplicate files) has been fixed. Only minor style/UX findings remain.
+TypeScript compiles. 151 tests pass. All critical issues fixed. Only minor style/UX findings remain.
 
 Max severity: minor
 Ship allowed: yes
