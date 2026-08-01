@@ -301,4 +301,133 @@ describe("Course CRUD operations", () => {
       expect(prisma.course.delete).not.toHaveBeenCalled()
     })
   })
+
+  describe("Toggle Course Status", () => {
+    it("should toggle course from DRAFT to PUBLISHED", async () => {
+      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+
+      const draftCourse = {
+        id: "course-1",
+        profId: "prof-test-id",
+        slug: "test-course",
+        title: "Test Course",
+        description: null,
+        price: 1000,
+        thumbnailUrl: null,
+        status: "DRAFT" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(draftCourse as any)
+      vi.mocked(prisma.course.update).mockResolvedValue({
+        ...draftCourse,
+        status: "PUBLISHED",
+      } as any)
+
+      const formData = new FormData()
+      formData.set("id", "course-1")
+
+      const { toggleCourseStatus } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      await toggleCourseStatus(formData)
+
+      expect(prisma.course.update).toHaveBeenCalledWith({
+        where: { id: "course-1" },
+        data: { status: "PUBLISHED" },
+      })
+    })
+
+    it("should toggle course from PUBLISHED to DRAFT", async () => {
+      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+
+      const publishedCourse = {
+        id: "course-1",
+        profId: "prof-test-id",
+        slug: "test-course",
+        title: "Test Course",
+        description: null,
+        price: 1000,
+        thumbnailUrl: null,
+        status: "PUBLISHED" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(publishedCourse as any)
+      vi.mocked(prisma.course.update).mockResolvedValue({
+        ...publishedCourse,
+        status: "DRAFT",
+      } as any)
+
+      const formData = new FormData()
+      formData.set("id", "course-1")
+
+      const { toggleCourseStatus } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      await toggleCourseStatus(formData)
+
+      expect(prisma.course.update).toHaveBeenCalledWith({
+        where: { id: "course-1" },
+        data: { status: "DRAFT" },
+      })
+    })
+
+    it("should return error when user is not authenticated", async () => {
+      vi.mocked(auth).mockResolvedValue(null)
+
+      const formData = new FormData()
+      formData.set("id", "course-1")
+
+      const { toggleCourseStatus } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      await expect(toggleCourseStatus(formData)).rejects.toThrow()
+    })
+
+    it("should return error when user is not the owner", async () => {
+      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+
+      const existingCourse = {
+        id: "course-1",
+        profId: "different-prof-id",
+        slug: "someone-elses-course",
+        title: "Someone Else's Course",
+        description: null,
+        price: 1000,
+        thumbnailUrl: null,
+        status: "DRAFT" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
+
+      const formData = new FormData()
+      formData.set("id", "course-1")
+
+      const { toggleCourseStatus } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      const result = await toggleCourseStatus(formData)
+
+      expect(result).toBeDefined()
+      expect(result?.error).toContain("autorisé")
+      expect(prisma.course.update).not.toHaveBeenCalled()
+    })
+
+    it("should return error when course is not found", async () => {
+      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
+
+      const formData = new FormData()
+      formData.set("id", "non-existent-course")
+
+      const { toggleCourseStatus } = await import("@/app/(dashboard)/dashboard/courses/actions")
+
+      const result = await toggleCourseStatus(formData)
+
+      expect(result).toBeDefined()
+      expect(result?.error).toContain("introuvable")
+      expect(prisma.course.update).not.toHaveBeenCalled()
+    })
+  })
 })

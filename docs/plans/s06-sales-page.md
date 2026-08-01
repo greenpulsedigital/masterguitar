@@ -35,7 +35,7 @@ Branch: `feature/s06-sales-page`
 - Include: `modules: { orderBy: { order: "asc" } }`, `prof: { select: { name: true } }`
 - Write unit test: found/not-found/draft-not-accessible
 
-### 4. [ ] Add toggleCourseStatus server action
+### 4. [x] Add toggleCourseStatus server action
 - Add to `src/app/(dashboard)/dashboard/courses/actions.ts`
 - Function: `toggleCourseStatus(formData: FormData)` toggles DRAFT ↔ PUBLISHED
 - Auth check: session + PROF role + ownership
