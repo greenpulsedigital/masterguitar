@@ -1,114 +1,158 @@
 # Review Report - Story s05-video-lessons
 
-> Fresh-context review (final). Each issue classified: critical / major / minor.
+> Fresh-context review. Each issue classified: critical / major / minor.
 > Diff reviewed: `git diff main...feature/s05-video-lessons`
 
-## Plan compliance
+## 1. Test Suite Execution
 
-- [x] The code does what the plan specifies, nothing more
+**Result: PASS**
 
-**Verification**: All 10 tasks completed:
+```
+Test Files  27 passed (27)
+     Tests  151 passed (151)
+  Duration  3.60s
+```
 
-| Task | Status | Notes |
-|------|--------|-------|
-| 1. Add Lesson model to Prisma schema | Done | Lesson model with cascade delete |
-| 2. Create lesson server actions | Done | createLesson, updateLesson, deleteLesson, reorderLesson |
-| 3. Write unit tests for lesson actions | Done | lesson-crud.test.ts |
-| 4. Create VideoPreview component | Done | YouTube/Vimeo URL parsing |
-| 5. Create LessonList client component | Done | lesson-list.tsx |
-| 6. Create LessonEditDialog component | Done | lesson-edit-dialog.tsx |
-| 7. Add expand/collapse to ModuleList | Done | ChevronRight/Down toggle |
-| 8. Update course edit page to fetch lessons | Done | Query includes lessons, types aligned |
-| 9. Write integration tests | Done | lesson-integration.test.tsx + video-preview.test.tsx |
-| 10. Manual verification | Done | All acceptance criteria verified |
+All tests pass. Verified by the reviewer.
 
-## Anti-hallucination
+## 2. Plan Compliance
 
-- [x] No invented API/function/import (each one opened and verified)
+All 10 tasks from `docs/plans/s05-video-lessons.md` completed:
 
-**Verified imports**:
-- `Button`, `Input`, `Textarea`, `Label`, `Dialog*` from `@/components/ui/*` — all exist with correct signatures
-- `ChevronUp`, `ChevronDown`, `ChevronRight`, `Trash2`, `Plus`, `Video`, `Package` from `lucide-react` — valid icons
-- `createLesson`, `updateLesson`, `deleteLesson`, `reorderLesson` from actions.ts — all exported (lines 350, 394, 440, 474)
-- `VideoPreview`, `LessonList`, `LessonEditDialog` — all exist with correct props
-- `auth` from `@/lib/auth` — verified
-- `prisma` from `@/lib/prisma` — verified
+| Task | Status | Verification |
+|------|--------|--------------|
+| 1. Add Lesson model to Prisma schema | Done | Lines 65-73 in `prisma/schema.prisma` |
+| 2. Create lesson server actions | Done | Lines 350-539 in `actions.ts` |
+| 3. Write unit tests for lesson actions | Done | `lesson-crud.test.ts` (545 lines) |
+| 4. Create VideoPreview component | Done | `video-preview.tsx` (73 lines) |
+| 5. Create LessonList client component | Done | `lesson-list.tsx` (189 lines) |
+| 6. Create LessonEditDialog component | Done | `lesson-edit-dialog.tsx` (118 lines) |
+| 7. Add expand/collapse to ModuleList | Done | Lines 120-136, 143-144, 219-235 in `module-list.tsx` |
+| 8. Update course edit page to fetch lessons | Done | Lines 37-41 in `page.tsx` |
+| 9. Write integration tests | Done | `lesson-integration.test.tsx` + `video-preview.test.tsx` |
+| 10. Manual verification | Done | All acceptance criteria met |
 
-**Verified logic**:
-- Lesson order calculation: `maxOrder + 1` pattern matches module actions
-- Ownership check: `lesson.module.course.profId === session.user.id` — correct three-level traversal
-- Reorder logic correctly swaps adjacent orders
-- Video URL parsing regex patterns correct for YouTube and Vimeo
+**Drift check**: Nothing in the diff that the plan did not ask for. No missing tasks.
 
-- [x] No plausible-but-wrong value or logic
-- [x] The code matches what it claims to do
+## 3. Anti-hallucination Verification
 
-## Rules compliance
+### Imports Verified
 
-- [x] Repo conventions followed (AGENTS.md)
-  - Server Components by default, `"use client"` only where needed
-  - Server Actions for mutations
-  - Absolute imports with `@/` alias
-  - kebab-case file names, PascalCase components
+All imports exist with correct signatures:
 
-- [x] No accepted ADR contradicted (docs/decisions/)
-  - ADR 001 (Stack): Uses Prisma, Next.js, shadcn/ui
-  - ADR 002 (SQLite): Lesson migration uses SQLite syntax
-  - ADR 003 (Auth): PROF role check, ownership validation
-  - ADR 005 (Video): videoUrl field, iframe embed, YouTube/Vimeo parsing
+| Import | Location | Status |
+|--------|----------|--------|
+| `Button`, `Input`, `Textarea`, `Label`, `Dialog*` | `src/components/ui/*` | Verified - all exist |
+| `ChevronUp`, `ChevronDown`, `ChevronRight`, `Trash2`, `Plus`, `Video` | `lucide-react` | Valid icons |
+| `createLesson`, `updateLesson`, `deleteLesson`, `reorderLesson` | `actions.ts` | Lines 350, 394, 440, 474 |
+| `VideoPreview` | `video-preview.tsx` | Exported line 29 |
+| `LessonList` | `lesson-list.tsx` | Exported line 31 |
+| `LessonEditDialog` | `lesson-edit-dialog.tsx` | Exported line 34 |
+| `auth` | `@/lib/auth` | Used correctly in all actions |
+| `prisma` | `@/lib/prisma` | Used correctly in all actions |
 
-- [x] Design system respected
-  - Components: Button, Input, Textarea, Label, Dialog, Card from shadcn/ui
-  - Icons: Lucide React (correct icons as specified)
-  - Colors: `text-muted-foreground`, `text-destructive`, `bg-muted`, `bg-card`
-  - Button variants/sizes: ghost, destructive, icon, icon-sm, sm
-  - 16:9 aspect ratio for video preview
-  - Empty states with centered icon + text pattern
+### Button Size Variants
 
-## Tests
+Verified in `src/components/ui/button.tsx`:
+- `icon-sm` (line 30-31): Valid
+- `sm` (line 26): Valid
+- `icon` (line 28): Valid
 
-- [x] Test suite run by the reviewer, passing (151 tests, 27 files)
-- [x] Assertions pin the acceptance criteria
+### Logic Verification
 
-**Test quality assessment**:
-- `lesson-crud.test.ts`: Auth checks, ownership checks, CRUD operations, reorder boundaries
-- `lesson-integration.test.tsx`: UI flows (add, edit, reorder, delete, empty state)
-- `video-preview.test.tsx`: YouTube/Vimeo URL parsing, empty/invalid states
-- `module-section-types.test.ts`: Type compatibility (prevents regression)
+1. **Lesson order calculation** (actions.ts lines 373-377):
+```typescript
+const maxOrder = module.lessons.length > 0
+  ? Math.max(...module.lessons.map(l => l.order))
+  : 0
+const order = maxOrder + 1
+```
+Correct: matches module pattern.
 
-## Regressions
+2. **Ownership check** (actions.ts line 420):
+```typescript
+if (lesson.module.course.profId !== session.user.id)
+```
+Correct: three-level traversal from lesson to module to course to prof.
 
-- [x] No impact on existing code paths
+3. **Video URL parsing** (video-preview.tsx lines 12-26):
+- YouTube regex: `/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/` - Correct
+- Vimeo regex: `/vimeo\.com\/(\d+)/` - Correct
 
-**Changes to existing files**:
-- `prisma/schema.prisma`: Added Lesson model, lessons relation to Module — non-breaking
-- `module-list.tsx`: Added expand/collapse, lesson rendering, aria-labels — extends functionality
-- `module-section.tsx`: Updated Module interface to include lessons — required for data flow
-- `actions.ts`: Added lesson actions at end of file — no modification to existing actions
-- `page.tsx` (course edit): Updated query include — only adds data
-- `module-integration.test.tsx`: Added `lessons: []` to mock modules — required for interface compatibility
+## 4. Test Quality Assessment
 
----
+### Tests Pin Acceptance Criteria
 
-## All Review Findings (Fixed)
+| Criterion | Test Coverage |
+|-----------|---------------|
+| Le prof peut ajouter une leçon | `lesson-crud.test.ts` lines 77-169 |
+| La leçon a titre, description, videoUrl | `updateLesson` tests verify all fields (lines 172-265) |
+| Le prof peut réordonner les leçons | `reorderLesson` tests (lines 349-543) - up/down/boundaries |
+| Le prof peut modifier ou supprimer une leçon | `updateLesson`, `deleteLesson` tests |
+| La vidéo s'affiche en preview | `video-preview.test.tsx` - all 3 states tested |
+
+### Assertions Are Real
+
+The tests actually assert on behavior, not just "it exists":
+- `expect(prisma.lesson.create).toHaveBeenCalledWith({ data: { title: "Nouvelle leçon", order: 3, moduleId: "module-1" } })` - Verifies exact payload
+- `expect(result?.error).toContain("autorisé")` - Verifies error messages
+- Boundary checks verify `prisma.lesson.update` is NOT called when invalid
+
+## 5. ADR Compliance
+
+| ADR | Compliance |
+|-----|------------|
+| 001-stack.md | Uses Prisma, Next.js, shadcn/ui - Compliant |
+| 002-sqlite-local-dev.md | SQLite migration syntax - Compliant |
+| 003-auth-strategy.md | PROF role check, ownership validation - Compliant |
+| 005-video-hosting.md | `videoUrl` field, iframe embed, YouTube/Vimeo parsing - Compliant |
+
+## 6. Design System Compliance
+
+Checked against `docs/design-system.md`:
+
+| Element | Design System | Implementation | Status |
+|---------|---------------|----------------|--------|
+| Empty state | Icon + centered text | `Video` icon + "Aucune leçon" | Compliant |
+| Error state | `text-destructive` | Used in video-preview.tsx line 46 | Compliant |
+| Button variants | ghost, destructive, icon-sm | All used correctly | Compliant |
+| Form labels | Label above input | Used in LessonEditDialog | Compliant |
+| Dialog | From shadcn/ui | Imported from `@/components/ui/dialog` | Compliant |
+| 16:9 video | Responsive container | `aspectRatio: "16 / 9"` | Compliant |
+
+## 7. Regression Check
+
+**Modified existing files**:
+- `prisma/schema.prisma`: Added Lesson model, lessons relation - Non-breaking addition
+- `module-list.tsx`: Added expand/collapse, lesson rendering - Extends without breaking
+- `module-section.tsx`: Updated Module interface - Required for data flow
+- `actions.ts`: Added lesson actions at file end - No modification to existing
+- `page.tsx`: Updated query include - Only adds data
+- `module-integration.test.tsx`: Added `lessons: []` to mocks - Required for type compatibility
+
+No regressions introduced.
+
+## 8. Findings
+
+### Fixed Issues (from previous reviews)
 
 | Severity | File | Issue | Status |
 |----------|------|-------|--------|
-| ~~critical~~ | Multiple files with " 2" and " 3" suffixes | 172 duplicate junk files breaking build | **Fixed** — commit `98723f5` |
-| ~~critical~~ | `src/__tests__/module-integration.test.tsx` | TypeScript errors — mock modules missing `lessons` property | **Fixed** — added `lessons: []` |
-| ~~minor~~ | `src/components/video-preview.tsx` | iframe lacks `title` attribute | **Fixed** — added `title="Video preview"` |
-| ~~minor~~ | `src/components/lesson-list.tsx` | Icon buttons lack `aria-label` | **Fixed** — all buttons have aria-labels |
+| ~~critical~~ | Multiple files | 172 duplicate junk files breaking build | Fixed - commit `98723f5` |
+| ~~critical~~ | `module-integration.test.tsx` | TypeScript errors - mock modules missing `lessons` | Fixed - commit `facf9c8` |
+| ~~minor~~ | `video-preview.tsx` | iframe lacks `title` attribute | Fixed - commit `1ddf6f3` |
+| ~~minor~~ | `lesson-list.tsx` | Icon buttons lack `aria-label` | Fixed - commit `1ddf6f3` |
 
-## Remaining Minor Issues (non-blocking)
+### Minor Issues (non-blocking)
 
-| Severity | File | Issue |
-|----------|------|-------|
-| **minor** | `src/components/module-list.tsx:172-178` | Expand/collapse button lacks `aria-label` (unlike reorder/delete buttons which have them). |
-| **minor** | `src/components/video-preview.tsx:33` | Uses inline `style={{ aspectRatio: "16 / 9" }}` instead of Tailwind's `aspect-video`. Works correctly but inconsistent with Tailwind preference. |
+| Severity | File | Line | Issue |
+|----------|------|------|-------|
+| **minor** | `src/components/module-list.tsx` | 172-178 | Expand/collapse button lacks `aria-label` (other icon buttons have them). |
+| **minor** | `src/components/video-preview.tsx` | 33, 46, 63 | Uses inline `style={{ aspectRatio: "16 / 9" }}` instead of Tailwind's `aspect-video`. Works correctly but inconsistent with Tailwind preference. |
 
----
+### No Critical or Major Issues Found
 
-## Verdict
+## 9. Verdict
 
 All acceptance criteria verified:
 - [x] Le prof peut ajouter une leçon à un module
@@ -117,7 +161,9 @@ All acceptance criteria verified:
 - [x] Le prof peut modifier ou supprimer une leçon
 - [x] La vidéo s'affiche en preview dans l'éditeur
 
-TypeScript compiles. 151 tests pass. All critical issues fixed. Only minor style/UX findings remain.
+Test suite passes (151 tests). All imports verified. No invented APIs. ADRs compliant. Design system respected.
+
+---
 
 Max severity: minor
 Ship allowed: yes
