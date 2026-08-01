@@ -23,7 +23,7 @@ Branch: `feature/s06-sales-page`
 - Run `npx prisma migrate dev --name global-slug`
 - Write test: verify slug uniqueness constraint works
 
-### 2. [ ] Create formatPrice helper
+### 2. [x] Create formatPrice helper
 - Create `src/lib/format.ts` with `formatPrice(cents: number): string`
 - Format: French locale, Euro symbol (e.g., "49,00 €")
 - Write unit test for formatPrice (edge cases: 0, large amounts, decimals)
