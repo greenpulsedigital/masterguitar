@@ -68,7 +68,7 @@ Branch: `feature/s04-course-structure`
 - Add `<ModuleSection modules={course.modules} courseId={course.id} />` below `<CourseForm>`
 - **Verify**: Modules appear on edit page, ordered correctly
 
-### 7. [ ] Write integration tests for module UI flows
+### 7. [x] Write integration tests for module UI flows
 - File: `src/__tests__/module-integration.test.ts`
 - Test add module → appears in list
 - Test rename module → title updates
