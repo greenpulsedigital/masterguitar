@@ -26,7 +26,7 @@ Branch: `feature/s04-course-structure`
 - Run migration: `npx prisma migrate dev --name add-module-model`
 - **Verify**: Prisma client regenerates, `prisma.module.*` methods available
 
-### 2. [ ] Create module server actions
+### 2. [x] Create module server actions
 - File: `src/app/(dashboard)/dashboard/courses/actions.ts`
 - Add `createModule(formData: FormData)` — creates module with title "Nouveau module", order = max + 1
 - Add `updateModule(formData: FormData)` — updates title, validates ownership
@@ -35,7 +35,7 @@ Branch: `feature/s04-course-structure`
 - Each action: auth check (PROF), ownership check (course.profId === session.user.id)
 - **Verify**: Actions export correctly, TypeScript compiles
 
-### 3. [ ] Write tests for module actions
+### 3. [x] Write tests for module actions
 - File: `src/__tests__/module-crud.test.ts`
 - Test `createModule`: creates with correct order, auth required, ownership required
 - Test `updateModule`: updates title, auth required, ownership required

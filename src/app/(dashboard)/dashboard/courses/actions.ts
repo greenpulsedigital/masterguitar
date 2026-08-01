@@ -158,3 +158,189 @@ export async function deleteCourse(formData: FormData) {
     return { error: "Erreur lors de la suppression du cours" }
   }
 }
+
+// Module actions
+
+export async function createModule(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const courseId = formData.get("courseId") as string
+
+  // Check ownership
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    include: { modules: true },
+  })
+
+  if (!course) {
+    return { error: "Cours introuvable" }
+  }
+
+  if (course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier ce cours" }
+  }
+
+  // Calculate next order value
+  const maxOrder = course.modules.length > 0
+    ? Math.max(...course.modules.map(m => m.order))
+    : 0
+  const order = maxOrder + 1
+
+  try {
+    await prisma.module.create({
+      data: {
+        title: "Nouveau module",
+        order,
+        courseId,
+      },
+    })
+
+    redirect(`/dashboard/courses/${courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la création du module" }
+  }
+}
+
+export async function updateModule(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+  const title = formData.get("title") as string
+
+  if (!title || title.trim() === "") {
+    return { error: "Le titre est requis" }
+  }
+
+  // Check ownership
+  const module = await prisma.module.findUnique({
+    where: { id },
+    include: { course: true },
+  })
+
+  if (!module) {
+    return { error: "Module introuvable" }
+  }
+
+  if (module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier ce module" }
+  }
+
+  try {
+    await prisma.module.update({
+      where: { id },
+      data: { title },
+    })
+
+    redirect(`/dashboard/courses/${module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la mise à jour du module" }
+  }
+}
+
+export async function deleteModule(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+
+  // Check ownership
+  const module = await prisma.module.findUnique({
+    where: { id },
+    include: { course: true },
+  })
+
+  if (!module) {
+    return { error: "Module introuvable" }
+  }
+
+  if (module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à supprimer ce module" }
+  }
+
+  try {
+    await prisma.module.delete({
+      where: { id },
+    })
+
+    redirect(`/dashboard/courses/${module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors de la suppression du module" }
+  }
+}
+
+export async function reorderModule(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+  const direction = formData.get("direction") as "up" | "down"
+
+  // Get module with course and all modules
+  const module = await prisma.module.findUnique({
+    where: { id },
+    include: {
+      course: {
+        include: {
+          modules: {
+            orderBy: { order: "asc" },
+          },
+        },
+      },
+    },
+  })
+
+  if (!module) {
+    return { error: "Module introuvable" }
+  }
+
+  if (module.course.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier ce module" }
+  }
+
+  const modules = module.course.modules
+  const currentIndex = modules.findIndex(m => m.id === id)
+
+  // Check boundaries
+  if (direction === "up" && currentIndex === 0) {
+    return { error: "Le module est déjà en première position" }
+  }
+
+  if (direction === "down" && currentIndex === modules.length - 1) {
+    return { error: "Le module est déjà en dernière position" }
+  }
+
+  // Find adjacent module
+  const adjacentIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+  const adjacentModule = modules[adjacentIndex]
+
+  // Swap orders
+  try {
+    await prisma.module.update({
+      where: { id: module.id },
+      data: { order: adjacentModule.order },
+    })
+
+    await prisma.module.update({
+      where: { id: adjacentModule.id },
+      data: { order: module.order },
+    })
+
+    redirect(`/dashboard/courses/${module.courseId}`)
+  } catch (error) {
+    return { error: "Erreur lors du réordonnancement du module" }
+  }
+}
