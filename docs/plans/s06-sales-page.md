@@ -41,7 +41,7 @@ Branch: `feature/s06-sales-page`
 - Auth check: session + PROF role + ownership
 - Write unit test: toggle works, unauthorized rejected
 
-### 5. [ ] Add publish button to course edit page
+### 5. [x] Add publish button to course edit page
 - Update `src/app/(dashboard)/dashboard/courses/[id]/page.tsx`
 - Add Badge showing current status (DRAFT/PUBLISHED)
 - Add Button to toggle status (calls toggleCourseStatus action)
