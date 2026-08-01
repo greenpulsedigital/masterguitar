@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>s05-video-lessons — Mockup</title>
+  <style>
+    /* Design system tokens */
+    :root {
+      --background: oklch(0.145 0 0);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.205 0 0);
+      --card-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --border: oklch(1 0 0 / 10%);
+      --primary: oklch(0.65 0.25 250);
+      --primary-foreground: oklch(0.985 0 0);
+      --destructive: oklch(0.704 0.191 22.216);
+      --ring: oklch(0.65 0.25 250);
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 16px;
+      line-height: 1.5;
+      padding: 24px;
+      max-width: 672px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--muted-foreground);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--foreground);
+    }
+
+    .btn-ghost:hover {
+      background: var(--muted);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+
+    .btn-icon {
+      padding: 8px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .btn-icon-sm {
+      padding: 6px;
+      width: 28px;
+      height: 28px;
+    }
+
+    /* Module row */
+    .module-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .reorder-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .expand-btn {
+      transition: transform 0.2s;
+    }
+
+    .expand-btn.expanded {
+      transform: rotate(90deg);
+    }
+
+    .module-title {
+      flex: 1;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .module-title:hover {
+      color: var(--primary);
+    }
+
+    /* Lessons section (inside expanded module) */
+    .lessons-section {
+      padding: 0 12px 12px 48px;
+      border-top: 1px solid var(--border);
+      margin-top: 0;
+      padding-top: 12px;
+    }
+
+    .lessons-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .lessons-title {
+      font-size: 14px;
+      color: var(--muted-foreground);
+      font-weight: 500;
+    }
+
+    /* Lesson row */
+    .lesson-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--muted);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+    }
+
+    .lesson-title {
+      flex: 1;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color 0.15s;
+    }
+
+    .lesson-title:hover {
+      color: var(--primary);
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      color: var(--muted-foreground);
+      text-align: center;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* Dialog overlay */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .dialog {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dialog-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .dialog-content {
+      padding: 16px;
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .input, .textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--foreground);
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .input:focus, .textarea:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px oklch(0.65 0.25 250 / 30%);
+    }
+
+    .textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    /* Video preview */
+    .video-preview {
+      aspect-ratio: 16 / 9;
+      background: var(--muted);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      overflow: hidden;
+    }
+
+    .video-preview svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    .video-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Icons (simplified SVG) */
+    .icon {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .icon-lg {
+      width: 48px;
+      height: 48px;
+    }
+
+    /* Section divider */
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-note {
+      font-size: 12px;
+      color: var(--muted-foreground);
+      margin-top: 8px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>State 1: Module list with lessons (expanded)</h2>
+  <div class="section">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Modules</span>
+        <button class="btn btn-primary btn-sm">Ajouter un module</button>
+      </div>
+
+      <!-- Module 1: Collapsed -->
+      <div class="module-row">
+        <div class="module-header">
+          <div class="reorder-btns">
+            <button class="btn btn-ghost btn-icon-sm" disabled>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-ghost btn-icon-sm expand-btn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <span class="module-title">Introduction à la guitare</span>
+          <button class="btn btn-ghost btn-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Module 2: Expanded with lessons -->
+      <div class="module-row">
+        <div class="module-header">
+          <div class="reorder-btns">
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-ghost btn-icon-sm expand-btn expanded">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <span class="module-title">Les accords de base</span>
+          <button class="btn btn-ghost btn-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+
+        <div class="lessons-section">
+          <div class="lessons-header">
+            <span class="lessons-title">Leçons</span>
+            <button class="btn btn-ghost btn-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Ajouter
+            </button>
+          </div>
+
+          <div class="lesson-row">
+            <div class="reorder-btns" style="flex-direction: row; gap: 2px;">
+              <button class="btn btn-ghost btn-icon-sm" disabled>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-icon-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span class="lesson-title">Accords majeurs (Do, Ré, Mi)</span>
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+
+          <div class="lesson-row">
+            <div class="reorder-btns" style="flex-direction: row; gap: 2px;">
+              <button class="btn btn-ghost btn-icon-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-icon-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span class="lesson-title">Accords mineurs</span>
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+
+          <div class="lesson-row">
+            <div class="reorder-btns" style="flex-direction: row; gap: 2px;">
+              <button class="btn btn-ghost btn-icon-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-icon-sm" disabled>
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span class="lesson-title">Transitions entre accords</span>
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module 3: Collapsed -->
+      <div class="module-row">
+        <div class="module-header">
+          <div class="reorder-btns">
+            <button class="btn btn-ghost btn-icon-sm">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-icon-sm" disabled>
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-ghost btn-icon-sm expand-btn">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+          <span class="module-title">Techniques avancées</span>
+          <button class="btn btn-ghost btn-icon">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>State 2: Empty lessons state</h2>
+  <div class="section">
+    <div class="lessons-section" style="padding-left: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+      <div class="lessons-header">
+        <span class="lessons-title">Leçons</span>
+        <button class="btn btn-ghost btn-sm">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter
+        </button>
+      </div>
+      <div class="empty-state">
+        <svg class="icon icon-lg" viewBox="0 0 24 24">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+          <path d="M10 8l6 4-6 4V8z"/>
+        </svg>
+        <span>Aucune leçon</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>State 3: Lesson edit dialog</h2>
+  <div class="section">
+    <div class="dialog" style="position: relative;">
+      <div class="dialog-header">
+        <span class="dialog-title">Modifier la leçon</span>
+        <button class="btn btn-ghost btn-icon-sm">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="dialog-content">
+        <div class="form-group">
+          <label class="label">Titre</label>
+          <input type="text" class="input" value="Accords majeurs (Do, Ré, Mi)">
+        </div>
+        <div class="form-group">
+          <label class="label">Description (optionnel)</label>
+          <textarea class="textarea">Dans cette leçon, nous allons apprendre les accords majeurs de base. Vous découvrirez comment positionner vos doigts pour jouer Do, Ré et Mi.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="label">URL vidéo</label>
+          <input type="url" class="input" value="https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+        </div>
+        <div class="form-group">
+          <label class="label">Aperçu vidéo</label>
+          <div class="video-preview">
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost">Annuler</button>
+        <button class="btn btn-primary">Enregistrer</button>
+      </div>
+    </div>
+    <p class="section-note">Note: The video preview shows a 16:9 iframe embed when a valid URL is provided.</p>
+  </div>
+
+  <h2>State 4: Video preview — no URL</h2>
+  <div class="section">
+    <div class="video-preview" style="max-width: 400px;">
+      <svg class="icon icon-lg" viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+        <path d="M10 8l6 4-6 4V8z"/>
+      </svg>
+      <span>Aucune vidéo ajoutée</span>
+    </div>
+  </div>
+
+  <h2>State 5: Delete confirmation dialog</h2>
+  <div class="section">
+    <div class="dialog" style="position: relative; max-width: 400px;">
+      <div class="dialog-header">
+        <span class="dialog-title">Supprimer la leçon</span>
+        <button class="btn btn-ghost btn-icon-sm">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="dialog-content">
+        <p style="color: var(--muted-foreground);">Êtes-vous sûr de vouloir supprimer cette leçon ? Cette action est irréversible.</p>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-ghost">Annuler</button>
+        <button class="btn btn-primary" style="background: var(--destructive);">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

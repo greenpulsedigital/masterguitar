@@ -18,7 +18,7 @@ Branch: `feature/s05-video-lessons`
 
 ## Tasks (ordered)
 
-### 1. [ ] Add Lesson model to Prisma schema
+### 1. [x] Add Lesson model to Prisma schema
 - Add `Lesson` model with fields: `id`, `title`, `description` (optional), `videoUrl` (optional), `order`, `moduleId`
 - Add `lessons` relation to `Module` model
 - Configure `onDelete: Cascade` on the Module relation
