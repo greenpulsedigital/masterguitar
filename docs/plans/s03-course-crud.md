@@ -10,11 +10,11 @@ Branch: `feature/s03-course-crud`
 **As a** prof **I want** créer, modifier et supprimer mes cours **so that** je peux organiser mon catalogue.
 
 ### Acceptance criteria
-- [ ] Le prof peut créer un cours (titre, description, prix, thumbnail)
-- [ ] Le prof peut voir la liste de ses cours
-- [ ] Le prof peut modifier un cours existant
-- [ ] Le prof peut supprimer un cours (soft delete ou confirmation)
-- [ ] Le cours a un slug unique pour l'URL publique
+- [x] Le prof peut créer un cours (titre, description, prix, thumbnail)
+- [x] Le prof peut voir la liste de ses cours
+- [x] Le prof peut modifier un cours existant
+- [x] Le prof peut supprimer un cours (soft delete ou confirmation)
+- [x] Le cours a un slug unique pour l'URL publique
 
 ## Tasks (ordered)
 
@@ -44,14 +44,14 @@ Branch: `feature/s03-course-crud`
    - Add "Nouveau cours" button linking to `/dashboard/courses/new`
    - Verify: page renders at `/dashboard/courses`
 
-5. [ ] **Create course form component**
+5. [x] **Create course form component**
    - Create `src/components/course-form.tsx` (Client Component)
    - Props: `course?: Course` (for edit mode), `action: (formData) => Promise`
    - Fields: title, description (textarea), price (number), thumbnailUrl
    - Display error state from action response
    - Verify: component renders with empty form
 
-6. [ ] **Create course creation page and action**
+6. [x] **Create course creation page and action**
    - Create `src/app/(dashboard)/dashboard/courses/new/page.tsx`
    - Create `src/app/(dashboard)/dashboard/courses/actions.ts` with `createCourse` action
    - Validate input with Zod (title required, price >= 0)
@@ -60,7 +60,7 @@ Branch: `feature/s03-course-crud`
    - Redirect to `/dashboard/courses/[id]` on success
    - Verify: creating a course works end-to-end
 
-7. [ ] **Create course edit page and action**
+7. [x] **Create course edit page and action**
    - Create `src/app/(dashboard)/dashboard/courses/[id]/page.tsx`
    - Fetch course by id, verify ownership (`course.profId === session.user.id`)
    - Prefill form with course data
@@ -68,20 +68,20 @@ Branch: `feature/s03-course-crud`
    - Redirect to `/dashboard/courses` on success
    - Verify: editing a course works end-to-end
 
-8. [ ] **Create delete course action with confirmation**
+8. [x] **Create delete course action with confirmation**
    - Add `deleteCourse` action to actions.ts
    - Hard delete course (simpler for MVP)
    - Create delete confirmation dialog in edit page
    - Redirect to `/dashboard/courses` after delete
    - Verify: deleting a course works with confirmation
 
-9. [ ] **Update dashboard home page**
+9. [x] **Update dashboard home page**
    - Modify `src/app/(dashboard)/dashboard/page.tsx`
    - Add "Mes cours" section with link to `/dashboard/courses`
    - Or redirect dashboard to courses list (simpler)
    - Verify: navigation from dashboard to courses works
 
-10. [ ] **Add integration tests**
+10. [x] **Add integration tests**
     - Test: create course with valid data → course created
     - Test: create course without title → error
     - Test: edit course → changes saved
@@ -125,15 +125,15 @@ Branch: `feature/s03-course-crud`
 
 ## Definition of Done
 
-- [ ] All 10 tasks completed
-- [ ] `npm run build` compiles without errors
-- [ ] `npm test` passes (all course tests)
-- [ ] Course CRUD works end-to-end:
-  - [ ] Create with title, description, price, thumbnail
-  - [ ] List shows all user's courses
-  - [ ] Edit updates course
-  - [ ] Delete removes course (with confirmation)
-- [ ] Slug is generated and unique per prof
+- [x] All 10 tasks completed
+- [x] `npm run build` compiles without errors
+- [x] `npm test` passes (all course tests)
+- [x] Course CRUD works end-to-end:
+  - [x] Create with title, description, price, thumbnail
+  - [x] List shows all user's courses
+  - [x] Edit updates course
+  - [x] Delete removes course (with confirmation)
+- [x] Slug is generated and unique per prof
 - [ ] Mobile responsive (tested at 375px width)
-- [ ] TypeScript compiles without errors
-- [ ] Committed to `feature/s03-course-crud` branch
+- [x] TypeScript compiles without errors
+- [x] Committed to `feature/s03-course-crud` branch
