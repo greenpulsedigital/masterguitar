@@ -231,5 +231,24 @@ describe("Module UI Integration", () => {
         expect(createModule).toHaveBeenCalled()
       })
     })
+
+    it("should use icon-sm size for reorder buttons per design spec", () => {
+      render(<ModuleSection modules={mockModules} courseId="course-1" />)
+
+      const allButtons = screen.getAllByRole("button")
+      const upButtons = allButtons.filter(btn => {
+        const svg = btn.querySelector('.lucide-chevron-up')
+        return svg !== null
+      })
+
+      // Reorder buttons should not have custom h-6 w-6 classes
+      // They should use the icon-sm size variant (28px, not 24px)
+      upButtons.forEach(btn => {
+        const classes = btn.className
+        // Should not have h-6 w-6 override
+        expect(classes).not.toContain('h-6')
+        expect(classes).not.toContain('w-6')
+      })
+    })
   })
 })

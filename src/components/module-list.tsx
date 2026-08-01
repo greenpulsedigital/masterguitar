@@ -117,8 +117,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
+                size="icon-sm"
                 onClick={() => handleReorder(module.id, "up")}
                 disabled={index === 0}
               >
@@ -127,8 +126,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-6 w-6"
+                size="icon-sm"
                 onClick={() => handleReorder(module.id, "down")}
                 disabled={index === items.length - 1}
               >
