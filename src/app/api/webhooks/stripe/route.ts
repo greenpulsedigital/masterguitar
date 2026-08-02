@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import Stripe from "stripe"
 import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 
@@ -22,13 +23,19 @@ export async function POST(request: NextRequest) {
 
     // Handle the event
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as any
+      const session = event.data.object as Stripe.Checkout.Session
 
-      const { courseId, userId } = session.metadata
+      const courseId = session.metadata?.courseId
+      const userId = session.metadata?.userId
 
       if (!courseId || !userId) {
         console.error("Missing metadata in checkout session:", session.id)
         return new Response("Missing metadata", { status: 400 })
+      }
+
+      if (session.amount_total === null) {
+        console.error("Missing amount_total in checkout session:", session.id)
+        return new Response("Missing amount", { status: 400 })
       }
 
       // Check if purchase already exists (idempotency)
@@ -47,8 +54,8 @@ export async function POST(request: NextRequest) {
           amount: session.amount_total,
           stripePaymentId: session.payment_intent as string,
           stripeSessionId: session.id,
-          userId: userId,
-          courseId: courseId,
+          userId,
+          courseId,
         },
       })
 
