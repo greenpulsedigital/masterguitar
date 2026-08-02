@@ -32,7 +32,7 @@ Branch: `feature/s07-stripe-checkout`
 - Export typed `stripe` instance
 - **Test**: Unit test that client initializes (mock env)
 
-### 3. [ ] Add getCourseById query function
+### 3. [x] Add getCourseById query function
 - Add to `src/lib/queries/course.ts`
 - Returns course with `id`, `title`, `slug`, `price`, `status`, `profId`
 - Used for checkout validation (course exists, is published)
