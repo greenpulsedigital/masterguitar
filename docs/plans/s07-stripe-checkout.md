@@ -38,7 +38,7 @@ Branch: `feature/s07-stripe-checkout`
 - Used for checkout validation (course exists, is published)
 - **Test**: Unit test with Prisma mock
 
-### 4. [ ] Create checkout server action
+### 4. [x] Create checkout server action
 - Create `src/app/checkout/actions.ts` with `createCheckoutSession(courseId: string)`
 - Validate: user authenticated, course exists and PUBLISHED, user doesn't already own it
 - Create Stripe Checkout session with:
