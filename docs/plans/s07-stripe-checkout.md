@@ -81,7 +81,7 @@ Branch: `feature/s07-stripe-checkout`
 - Uses design system: Card, Button components
 - **Test**: Renders correctly with valid session
 
-### 8. [ ] Integration tests for full checkout flow
+### 8. [x] Integration tests for full checkout flow
 - Test checkout action with mocked Stripe
 - Test webhook with mocked Stripe signature verification
 - Test Purchase creation and duplicate prevention
