@@ -71,7 +71,7 @@ Branch: `feature/s07-stripe-checkout`
   - Returns 200 OK
 - **Test**: Unit test with mock Stripe event, test idempotency
 
-### 7. [ ] Create success page
+### 7. [x] Create success page
 - Create `src/app/checkout/success/page.tsx`
 - Server Component that:
   - Reads `session_id` from searchParams
