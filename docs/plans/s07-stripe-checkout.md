@@ -20,7 +20,7 @@ Branch: `feature/s07-stripe-checkout`
 
 ## Tasks (ordered)
 
-### 1. [ ] Add Purchase model to schema and run migration
+### 1. [x] Add Purchase model to schema and run migration
 - Add `Purchase` model with `id`, `amount`, `stripePaymentId` (unique), `stripeSessionId`, `userId`, `courseId`, `createdAt`
 - Add `purchases Purchase[]` relation to `User` and `Course` models
 - Run `prisma migrate dev --name s07_purchase_model`
