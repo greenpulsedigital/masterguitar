@@ -27,6 +27,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   courses      Course[]
+  purchases    Purchase[]
 }
 
 enum CourseStatus {
@@ -49,6 +50,7 @@ model Course {
   prof         User         @relation(fields: [profId], references: [id])
 
   modules      Module[]
+  purchases    Purchase[]
 }
 
 model Module {
@@ -57,4 +59,17 @@ model Module {
   order    Int
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  amount          Int      // cents
+  stripePaymentId String   @unique
+  stripeSessionId String   @unique
+  createdAt       DateTime @default(now())
+
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id])
 }

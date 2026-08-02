@@ -25,3 +25,22 @@ export async function getCourseBySlug(slug: string) {
     },
   })
 }
+
+/**
+ * Get a course by ID (for checkout validation)
+ * @param id - Course ID
+ * @returns Course with basic info, or null if not found
+ */
+export async function getCourseById(id: string) {
+  return prisma.course.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      price: true,
+      status: true,
+      profId: true,
+    },
+  })
+}
