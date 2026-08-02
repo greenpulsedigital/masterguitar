@@ -344,3 +344,40 @@ export async function reorderModule(formData: FormData) {
     return { error: "Erreur lors du réordonnancement du module" }
   }
 }
+
+export async function toggleCourseStatus(formData: FormData) {
+  const session = await auth()
+
+  if (!session || session.user.role !== "PROF") {
+    redirect("/login")
+  }
+
+  const id = formData.get("id") as string
+
+  // Check ownership
+  const existingCourse = await prisma.course.findUnique({
+    where: { id },
+  })
+
+  if (!existingCourse) {
+    return { error: "Cours introuvable" }
+  }
+
+  if (existingCourse.profId !== session.user.id) {
+    return { error: "Vous n'êtes pas autorisé à modifier ce cours" }
+  }
+
+  // Toggle status
+  const newStatus = existingCourse.status === "DRAFT" ? "PUBLISHED" : "DRAFT"
+
+  try {
+    await prisma.course.update({
+      where: { id },
+      data: { status: newStatus },
+    })
+
+    redirect(`/dashboard/courses/${id}`)
+  } catch (error) {
+    return { error: "Erreur lors du changement de statut du cours" }
+  }
+}

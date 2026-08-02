@@ -36,7 +36,7 @@ enum CourseStatus {
 
 model Course {
   id           String       @id @default(cuid())
-  slug         String
+  slug         String       @unique
   title        String
   description  String?
   price        Int          // cents
@@ -49,8 +49,6 @@ model Course {
   prof         User         @relation(fields: [profId], references: [id])
 
   modules      Module[]
-
-  @@unique([profId, slug])
 }
 
 model Module {
