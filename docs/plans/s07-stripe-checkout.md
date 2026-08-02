@@ -50,7 +50,7 @@ Branch: `feature/s07-stripe-checkout`
 - Return Stripe session URL for redirect
 - **Test**: Unit tests for validation (auth, course status, duplicate purchase)
 
-### 5. [ ] Create checkout page route
+### 5. [x] Create checkout page route
 - Create `src/app/checkout/[courseId]/page.tsx`
 - Server Component that:
   - Checks auth → redirect to `/login?callbackUrl=/checkout/{courseId}` if not authenticated
