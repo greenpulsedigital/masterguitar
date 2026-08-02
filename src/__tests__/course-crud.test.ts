@@ -374,7 +374,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when user is not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null)
+      vi.mocked(auth).mockResolvedValue(null as any)
 
       const formData = new FormData()
       formData.set("id", "course-1")

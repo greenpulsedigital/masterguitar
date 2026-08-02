@@ -94,8 +94,8 @@ export default async function CourseSalesPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild className="w-full" size="lg">
-                    <Link href={`/checkout/${course.id}`}>Acheter</Link>
+                  <Button render={<Link href={`/checkout/${course.id}`} />} className="w-full" size="lg">
+                    Acheter
                   </Button>
                 </CardContent>
               </Card>
@@ -111,8 +111,8 @@ export default async function CourseSalesPage({
             <p className="text-sm text-muted-foreground">Prix</p>
             <p className="text-xl font-semibold">{formatPrice(course.price)}</p>
           </div>
-          <Button asChild size="lg">
-            <Link href={`/checkout/${course.id}`}>Acheter</Link>
+          <Button render={<Link href={`/checkout/${course.id}`} />} size="lg">
+            Acheter
           </Button>
         </div>
       </div>
