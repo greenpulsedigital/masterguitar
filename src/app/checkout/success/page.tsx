@@ -4,16 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-interface SuccessPageProps {
-  searchParams: {
-    session_id?: string
-    already_purchased?: string
-  }
-}
+export default async function SuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session_id?: string; already_purchased?: string }>
+}) {
+  const { session_id, already_purchased } = await searchParams
 
-export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   // Handle already purchased case
-  if (searchParams.already_purchased === "true") {
+  if (already_purchased === "true") {
     return (
       <div className="container mx-auto max-w-2xl py-12 px-4">
         <Card>
@@ -30,13 +29,13 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   }
 
   // Require session_id
-  if (!searchParams.session_id) {
+  if (!session_id) {
     redirect("/")
   }
 
   try {
     // Retrieve session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(searchParams.session_id)
+    const session = await stripe.checkout.sessions.retrieve(session_id)
 
     return (
       <div className="container mx-auto max-w-2xl py-12 px-4">

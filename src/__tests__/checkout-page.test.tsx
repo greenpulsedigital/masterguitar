@@ -69,7 +69,7 @@ describe("Checkout Page", () => {
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
     await expect(async () => {
-      await CheckoutPage({ params: { courseId: "course-1" } })
+      await CheckoutPage({ params: Promise.resolve({ courseId: "course-1" }) })
     }).rejects.toThrow("NEXT_REDIRECT:/login?callbackUrl=/checkout/course-1")
   })
 
@@ -80,7 +80,7 @@ describe("Checkout Page", () => {
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
     await expect(async () => {
-      await CheckoutPage({ params: { courseId: "non-existent" } })
+      await CheckoutPage({ params: Promise.resolve({ courseId: "non-existent" }) })
     }).rejects.toThrow("NEXT_NOT_FOUND")
   })
 
@@ -94,7 +94,7 @@ describe("Checkout Page", () => {
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
     await expect(async () => {
-      await CheckoutPage({ params: { courseId: "course-1" } })
+      await CheckoutPage({ params: Promise.resolve({ courseId: "course-1" }) })
     }).rejects.toThrow("NEXT_NOT_FOUND")
   })
 
@@ -114,7 +114,7 @@ describe("Checkout Page", () => {
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
     await expect(async () => {
-      await CheckoutPage({ params: { courseId: "course-1" } })
+      await CheckoutPage({ params: Promise.resolve({ courseId: "course-1" }) })
     }).rejects.toThrow("NEXT_REDIRECT:/checkout/success?already_purchased=true")
   })
 
@@ -125,7 +125,7 @@ describe("Checkout Page", () => {
 
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
-    const result = await CheckoutPage({ params: { courseId: "course-1" } })
+    const result = await CheckoutPage({ params: Promise.resolve({ courseId: "course-1" }) })
     render(result as React.ReactElement)
 
     expect(screen.getByText("Test Course")).toBeInTheDocument()

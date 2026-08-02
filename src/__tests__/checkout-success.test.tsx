@@ -40,7 +40,7 @@ describe("Checkout Success Page", () => {
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
     const result = await SuccessPage({
-      searchParams: { session_id: "cs_test_123" },
+      searchParams: Promise.resolve({ session_id: "cs_test_123" }),
     })
     render(result as React.ReactElement)
 
@@ -52,7 +52,7 @@ describe("Checkout Success Page", () => {
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
     const result = await SuccessPage({
-      searchParams: { already_purchased: "true" },
+      searchParams: Promise.resolve({ already_purchased: "true" }),
     })
     render(result as React.ReactElement)
 
@@ -63,7 +63,7 @@ describe("Checkout Success Page", () => {
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
     await expect(async () => {
-      await SuccessPage({ searchParams: {} })
+      await SuccessPage({ searchParams: Promise.resolve({}) })
     }).rejects.toThrow("NEXT_REDIRECT:/")
   })
 
@@ -75,7 +75,7 @@ describe("Checkout Success Page", () => {
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
     await expect(async () => {
-      await SuccessPage({ searchParams: { session_id: "invalid" } })
+      await SuccessPage({ searchParams: Promise.resolve({ session_id: "invalid" }) })
     }).rejects.toThrow("NEXT_REDIRECT:/")
   })
 })

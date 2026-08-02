@@ -5,21 +5,21 @@ import { redirect, notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckoutButton } from "./checkout-button"
 
-interface CheckoutPageProps {
-  params: {
-    courseId: string
-  }
-}
+export default async function CheckoutPage({
+  params,
+}: {
+  params: Promise<{ courseId: string }>
+}) {
+  const { courseId } = await params
 
-export default async function CheckoutPage({ params }: CheckoutPageProps) {
   // Check authentication
   const session = await auth()
   if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=/checkout/${params.courseId}`)
+    redirect(`/login?callbackUrl=/checkout/${courseId}`)
   }
 
   // Get course
-  const course = await getCourseById(params.courseId)
+  const course = await getCourseById(courseId)
   if (!course || course.status !== "PUBLISHED") {
     notFound()
   }
@@ -28,7 +28,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const existingPurchase = await prisma.purchase.findFirst({
     where: {
       userId: session.user.id,
-      courseId: params.courseId,
+      courseId: courseId,
     },
   })
 
@@ -50,7 +50,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             <h2 className="text-2xl font-bold mb-2">{course.title}</h2>
             <p className="text-3xl font-bold text-primary">{priceInEuros} €</p>
           </div>
-          <CheckoutButton courseId={params.courseId} />
+          <CheckoutButton courseId={courseId} />
         </CardContent>
       </Card>
     </div>
