@@ -26,7 +26,7 @@ Branch: `feature/s07-stripe-checkout`
 - Run `prisma migrate dev --name s07_purchase_model`
 - **Test**: Schema compiles, migration applies
 
-### 2. [ ] Create Stripe client singleton
+### 2. [x] Create Stripe client singleton
 - Create `src/lib/stripe.ts` with server-side Stripe client
 - Use `STRIPE_SECRET_KEY` from environment
 - Export typed `stripe` instance
