@@ -20,7 +20,7 @@ export function CheckoutButton({ courseId }: CheckoutButtonProps) {
       const result = await createCheckoutSession(courseId)
 
       if ("error" in result) {
-        setError(result.error)
+        setError(result.error || "Une erreur est survenue")
         setIsLoading(false)
         return
       }

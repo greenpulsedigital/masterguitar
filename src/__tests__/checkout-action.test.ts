@@ -91,7 +91,7 @@ describe("createCheckoutSession", () => {
   })
 
   it("should return error when user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const result = await createCheckoutSession("course-1")
 

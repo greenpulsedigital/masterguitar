@@ -64,7 +64,7 @@ describe("Checkout Page", () => {
   })
 
   it("should redirect to login if user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null)
+    vi.mocked(auth).mockResolvedValue(null as any)
 
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
