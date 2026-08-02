@@ -60,7 +60,7 @@ Branch: `feature/s07-stripe-checkout`
   - Button triggers server action and redirects to Stripe
 - **Test**: Integration test for auth redirect and course validation
 
-### 6. [ ] Create webhook handler
+### 6. [x] Create webhook handler
 - Create `src/app/api/webhooks/stripe/route.ts`
 - POST handler that:
   - Reads raw body (no JSON parsing by Next.js)
