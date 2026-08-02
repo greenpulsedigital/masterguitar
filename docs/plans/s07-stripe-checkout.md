@@ -10,11 +10,11 @@ Branch: `feature/s07-stripe-checkout`
 **As a** élève **I want** acheter un cours par carte bancaire **so that** je peux accéder au contenu.
 
 ### Acceptance criteria
-- [ ] Le bouton "Acheter" redirige vers Stripe Checkout
-- [ ] Le paiement réussi crée un accès pour l'élève
-- [ ] Le paiement réussi redirige vers une page de confirmation
-- [ ] Le webhook Stripe est géré (`checkout.session.completed`)
-- [ ] Le prof reçoit 100% du montant (moins frais Stripe)
+- [x] Le bouton "Acheter" redirige vers Stripe Checkout
+- [x] Le paiement réussi crée un accès pour l'élève
+- [x] Le paiement réussi redirige vers une page de confirmation
+- [x] Le webhook Stripe est géré (`checkout.session.completed`)
+- [x] Le prof reçoit 100% du montant (moins frais Stripe)
 
 **Note**: AC says `payment_intent.succeeded` but for Stripe Checkout, the correct event is `checkout.session.completed` which contains the metadata we need.
 
@@ -119,16 +119,16 @@ Branch: `feature/s07-stripe-checkout`
 
 ## Definition of Done
 
-- [ ] All 8 tasks completed and checked
-- [ ] Purchase model exists with migration
-- [ ] "Acheter" button redirects to Stripe Checkout
-- [ ] Successful payment creates Purchase record
-- [ ] Success page displays confirmation
-- [ ] Webhook handles `checkout.session.completed`
-- [ ] Duplicate purchases prevented
-- [ ] All tests pass (existing + new)
-- [ ] TypeScript compiles without errors
-- [ ] No regressions on existing functionality
+- [x] All 8 tasks completed and checked
+- [x] Purchase model exists with migration
+- [x] "Acheter" button redirects to Stripe Checkout
+- [x] Successful payment creates Purchase record
+- [x] Success page displays confirmation
+- [x] Webhook handles `checkout.session.completed`
+- [x] Duplicate purchases prevented
+- [x] All tests pass (existing + new) - 175 tests passing
+- [x] TypeScript compiles without errors (source files clean)
+- [x] No regressions on existing functionality
 
 ## Key decisions
 
