@@ -33,7 +33,7 @@ Design decisions carried in from `docs/designs/s05-video-lessons.md` (not re-lit
 
 7. [x] Build `src/components/lesson-section.tsx`: sub-header "Leçons" + "Ajouter une leçon" button (`variant="outline"`, `size="sm"` per the design's smaller nested-button treatment) that opens `LessonFormDialog` in create mode; renders `LessonList` when `lessons.length > 0`, else the compact empty state (`Video` icon from lucide-react, "Aucune leçon", "Ajoutez des leçons vidéo à ce module.") per `docs/designs/s05-video-lessons.md`.
 
-8. [ ] Wire `LessonSection` into `src/components/module-list.tsx`: render it nested below each module's existing row (inside the same per-module block), passing that module's `lessons` and `moduleId`. Matches the mockup's nested-card layout (`docs/designs/s05-video-lessons.html`).
+8. [x] Wire `LessonSection` into `src/components/module-list.tsx`: render it nested below each module's existing row (inside the same per-module block), passing that module's `lessons` and `moduleId`. Matches the mockup's nested-card layout (`docs/designs/s05-video-lessons.html`).
 
 9. [ ] Write `src/__tests__/lesson-integration.test.tsx` mirroring `src/__tests__/module-integration.test.tsx`: renders a module with lessons (rows visible, correct titles), renders the empty state when a module has no lessons, opens the add dialog and confirms empty fields, opens the edit dialog pre-filled from an existing lesson, confirms reorder buttons are disabled at the first/last position, confirms delete opens the confirmation dialog before calling `deleteLesson`.
 
