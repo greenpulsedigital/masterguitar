@@ -1,17 +1,10 @@
 "use server"
 
-import { z } from "zod"
 import * as bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { signIn } from "@/lib/auth"
-
-export const signupSchema = z.object({
-  name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-  isProf: z.boolean().default(false),
-})
+import { signupSchema } from "./schema"
 
 export async function signup(formData: FormData) {
   const rawData = {

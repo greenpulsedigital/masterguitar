@@ -108,7 +108,7 @@ prisma/schema.prisma        # Data model
 1. **Server Components by default** — add `"use client"` only when needed (state, effects, events)
 2. **Server Actions for mutations** — not API routes for simple forms
 3. **Mobile-first** — start from mobile, use `md:` / `lg:` breakpoints up
-4. **Dark mode default** — "studio" theme, light as fallback
+4. **Light only** — "Bois & Ambre" theme, no dark mode (see ADR 007)
 5. **Absolute imports** — use `@/` alias, never `../../../`
 6. **No barrel exports** — import from file directly, not `index.ts`
 7. **Type safety** — no `any`, no `// @ts-ignore` without justification

@@ -17,6 +17,11 @@ export async function Header() {
         <nav className="ml-auto flex items-center gap-4">
           {session ? (
             <>
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  Tableau de bord
+                </Button>
+              </Link>
               <span className="text-sm text-muted-foreground">
                 {session.user.email}
               </span>

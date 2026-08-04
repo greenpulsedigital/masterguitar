@@ -4,32 +4,34 @@
 
 ## Visual identity
 
-**Theme**: Studio — dark, modern, premium
-**Accent**: Electric blue — vibrant, tech-forward, high contrast on dark backgrounds
-**Mode**: Dark by default, light as fallback
+**Theme**: Bois & Ambre — clair, chaleureux, convivial
+**Accent**: Ambre/bois de guitare — chaud, artisanal, invitant
+**Mode**: Clair uniquement (le mode sombre a été retiré — voir [ADR 007](../decisions/007-light-only-theme.md))
 
 ## Tokens
 
 ### Colors
 
-Base system: shadcn/ui neutral palette with custom accent override.
+Base system: shadcn/ui neutral palette with a warm amber accent. Single theme — no dark mode variant.
 
-| Token | Dark mode (default) | Light mode | Usage |
-|-------|---------------------|------------|-------|
-| `--background` | `oklch(0.145 0 0)` | `oklch(1 0 0)` | Page background |
-| `--foreground` | `oklch(0.985 0 0)` | `oklch(0.145 0 0)` | Primary text |
-| `--card` | `oklch(0.205 0 0)` | `oklch(1 0 0)` | Card backgrounds |
-| `--card-foreground` | `oklch(0.985 0 0)` | `oklch(0.145 0 0)` | Card text |
-| `--muted` | `oklch(0.269 0 0)` | `oklch(0.97 0 0)` | Subtle backgrounds |
-| `--muted-foreground` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | Secondary text |
-| `--border` | `oklch(1 0 0 / 10%)` | `oklch(0.922 0 0)` | Borders, dividers |
-| `--primary` | `oklch(0.65 0.25 250)` | `oklch(0.55 0.25 250)` | **Electric blue** — CTAs, links |
-| `--primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.985 0 0)` | Text on primary |
-| `--secondary` | `oklch(0.269 0 0)` | `oklch(0.97 0 0)` | Secondary actions |
-| `--destructive` | `oklch(0.704 0.191 22.216)` | `oklch(0.577 0.245 27.325)` | Errors, delete |
-| `--ring` | `oklch(0.65 0.25 250)` | `oklch(0.55 0.25 250)` | Focus rings |
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--background` | `#fbf6ee` | Page background (warm cream) |
+| `--foreground` | `#332417` | Primary text (warm dark brown, not pure black) |
+| `--card` | `#ffffff` | Card backgrounds |
+| `--card-foreground` | `#332417` | Card text |
+| `--muted` | `#f3ead9` | Subtle backgrounds |
+| `--muted-foreground` | `#7a6c56` | Secondary text |
+| `--border` | `#ecdfc9` | Borders, dividers |
+| `--primary` | `#a3632a` | **Amber** — CTAs, links |
+| `--primary-foreground` | `#fffaf3` | Text on primary |
+| `--secondary` | `#f3ead9` | Secondary actions |
+| `--accent` | `#f0dcc4` | Hover/highlight backgrounds |
+| `--accent-foreground` | `#5c3a1c` | Text on accent |
+| `--destructive` | `#c0392b` | Errors, delete |
+| `--ring` | `#a3632a` | Focus rings |
 
-**Electric blue accent**: `oklch(0.65 0.25 250)` — hue 250 is a vivid blue that pops on dark backgrounds.
+**Amber accent**: `#a3632a` — evokes guitar wood/varnish. Darkened from the initial mockup shade (`#c1793a`) to clear WCAG AA (4.5:1) for button text.
 
 ### Typography
 
@@ -193,7 +195,7 @@ shadcn/ui components installed via `npx shadcn add <name>`. Current inventory:
 
 ### Don't
 - Don't invent new colors outside the palette
-- Don't use light mode as default (dark is the studio theme)
+- Don't reintroduce a `.dark` variant or a theme toggle — single light theme by design decision
 - Don't hardcode pixel values for spacing (use Tailwind scale)
 - Don't put important actions in hover-only states (mobile has no hover)
 - Don't use more than 2 font weights on a single screen
@@ -214,18 +216,13 @@ Default size: `size-4` (16px). Adjust with `size-5`, `size-6` as needed.
 
 ## Customization for MasterGuitar
 
-To apply the electric blue accent, update `globals.css`:
+The amber accent is applied in `globals.css`:
 
 ```css
-.dark {
-  --primary: oklch(0.65 0.25 250);
-  --ring: oklch(0.65 0.25 250);
-}
-
 :root {
-  --primary: oklch(0.55 0.25 250);
-  --ring: oklch(0.55 0.25 250);
+  --primary: #a3632a;
+  --ring: #a3632a;
 }
 ```
 
-This change is implemented during s01-project-foundation.
+This change replaces the original "Studio" dark/electric-blue identity (implemented in s01-project-foundation) with the light "Bois & Ambre" identity — see [ADR 007](../decisions/007-light-only-theme.md).
