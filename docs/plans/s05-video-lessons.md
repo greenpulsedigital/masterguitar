@@ -19,7 +19,7 @@ Design decisions carried in from `docs/designs/s05-video-lessons.md` (not re-lit
 
 ## Tasks (ordered)
 
-1. [ ] Add `Lesson` model to `prisma/schema.prisma` (`id`, `title`, `description String?`, `videoUrl String?`, `order Int`, `moduleId`, `module` relation `onDelete: Cascade`) + `lessons Lesson[]` back-relation on `Module`. Run `npx prisma migrate dev --name s05_lesson_model`. Verify: migration directory created under `prisma/migrations/`, `src/generated/prisma/models/Lesson.ts` exists, `npm run build` (or `npx tsc --noEmit`) has no type errors.
+1. [x] Add `Lesson` model to `prisma/schema.prisma` (`id`, `title`, `description String?`, `videoUrl String?`, `order Int`, `moduleId`, `module` relation `onDelete: Cascade`) + `lessons Lesson[]` back-relation on `Module`. Run `npx prisma migrate dev --name s05_lesson_model`. Verify: migration directory created under `prisma/migrations/`, `src/generated/prisma/models/Lesson.ts` exists, `npm run build` (or `npx tsc --noEmit`) has no type errors.
 
 2. [ ] Write failing tests in `src/__tests__/lesson-crud.test.ts` for `createLesson`, `updateLesson`, `deleteLesson`, `reorderLesson` — mirror `src/__tests__/module-crud.test.ts`'s structure exactly: mock `@/lib/auth`, `next/navigation`, and `@/lib/prisma` (`prisma.lesson.{create,update,delete,findUnique,findMany}`, `prisma.module.findUnique` for the ownership chain). Cover: PROF-only access (STUDENT/no-session → redirect, no mutation), ownership check via `lesson.module.course.profId` (a different prof's lesson → error, no mutation), `order` calculated as `max(existing) + 1` on create, reorder swap between adjacent lessons only within the same module, reorder boundary errors (already first/already last).
 
