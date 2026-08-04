@@ -35,6 +35,11 @@ export default async function EditCoursePage({
     include: {
       modules: {
         orderBy: { order: "asc" },
+        include: {
+          lessons: {
+            orderBy: { order: "asc" },
+          },
+        },
       },
     },
   })

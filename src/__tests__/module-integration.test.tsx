@@ -15,9 +15,9 @@ import { updateModule, deleteModule, reorderModule } from "@/app/(dashboard)/das
 
 describe("Module UI Integration", () => {
   const mockModules = [
-    { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
-    { id: "mod-2", title: "Module 2", order: 2, courseId: "course-1" },
-    { id: "mod-3", title: "Module 3", order: 3, courseId: "course-1" },
+    { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1", lessons: [] },
+    { id: "mod-2", title: "Module 2", order: 2, courseId: "course-1", lessons: [] },
+    { id: "mod-3", title: "Module 3", order: 3, courseId: "course-1", lessons: [] },
   ]
 
   beforeEach(() => {

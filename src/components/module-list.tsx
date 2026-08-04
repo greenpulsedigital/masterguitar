@@ -14,11 +14,21 @@ import {
 } from "@/components/ui/dialog"
 import { updateModule, deleteModule, reorderModule } from "@/app/(dashboard)/dashboard/courses/actions"
 
+interface Lesson {
+  id: string
+  title: string
+  description: string | null
+  videoUrl: string | null
+  order: number
+  moduleId: string
+}
+
 interface Module {
   id: string
   title: string
   order: number
   courseId: string
+  lessons: Lesson[]
 }
 
 interface ModuleListProps {
