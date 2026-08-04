@@ -1,14 +1,9 @@
 "use server"
 
-import { z } from "zod"
 import { signIn } from "@/lib/auth"
 import { AuthError } from "next-auth"
 import { redirect } from "next/navigation"
-
-export const loginSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(1, "Le mot de passe est requis"),
-})
+import { loginSchema } from "./schema"
 
 export async function login(formData: FormData) {
   const rawData = {
