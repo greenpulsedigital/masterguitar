@@ -9,11 +9,11 @@ Branch: `feature/s05-video-lessons`
 **As a** prof **I want** ajouter des leçons vidéo à mes modules **so that** les élèves peuvent apprendre.
 
 Acceptance criteria:
-- [ ] Le prof peut ajouter une leçon à un module
-- [ ] La leçon a un titre, une description, une URL vidéo externe
-- [ ] Le prof peut réordonner les leçons dans un module
-- [ ] Le prof peut modifier ou supprimer une leçon
-- [ ] La vidéo s'affiche en preview dans l'éditeur
+- [x] Le prof peut ajouter une leçon à un module — `lesson-crud.test.ts` (createLesson : ordre, authentification, rôle, propriété), `lesson-actions.test.ts` (redirection après succès), `lesson-integration.test.tsx` (dialog d'ajout)
+- [x] La leçon a un titre, une description, une URL vidéo externe — `lesson-crud.test.ts` (updateLesson avec title, description, videoUrl), `lesson-actions.test.ts` (URL `https://` acceptée, `javascript:`/`data:`/`http:` refusées)
+- [x] Le prof peut réordonner les leçons dans un module — `lesson-crud.test.ts` (reorderLesson haut/bas, bornes), `lesson-actions.test.ts` (échange en une transaction, direction invalide), `lesson-integration.test.tsx` (réordonnancement, boutons désactivés aux bornes)
+- [x] Le prof peut modifier ou supprimer une leçon — `lesson-crud.test.ts` (updateLesson, deleteLesson, propriété), `lesson-integration.test.tsx` (dialog d'édition pré-rempli, confirmation avant suppression)
+- [ ] La vidéo s'affiche en preview dans l'éditeur — **non vérifié par test** : la prévisualisation existe dans le code (`src/components/lesson-form-dialog.tsx`, iframe `sandbox`), mais aucun test ne la couvre et aucune vérification manuelle n'est consignée
 
 Design decisions carried in from `docs/designs/s05-video-lessons.md` (not re-litigated here): lessons render nested inside each module's row (no new page/route); a lesson's title is not inline-editable like a module's — add/edit opens a `Dialog` form (3 fields don't fit an inline row); video URL is pasted pre-formatted (no YouTube/Vimeo parsing — matches the story's own "pas de player avancé" note and the fact that no embed-parsing utility exists anywhere in the codebase); `videoUrl` optional at the DB layer, validated as a well-formed URL only if provided (same pattern as `Course.thumbnailUrl`).
 
@@ -38,6 +38,7 @@ Design decisions carried in from `docs/designs/s05-video-lessons.md` (not re-lit
 9. [x] Write `src/__tests__/lesson-integration.test.tsx` mirroring `src/__tests__/module-integration.test.tsx`: renders a module with lessons (rows visible, correct titles), renders the empty state when a module has no lessons, opens the add dialog and confirms empty fields, opens the edit dialog pre-filled from an existing lesson, confirms reorder buttons are disabled at the first/last position, confirms delete opens the confirmation dialog before calling `deleteLesson`.
 
 10. [x] Run `npm test` — confirm 0 regressions against the pre-story baseline (177 passing) and all new lesson tests green. Manually verify in the running app (`npm run dev`): add a lesson with a real YouTube "embed" URL (e.g. `https://www.youtube.com/embed/dQw4w9WgXcQ`) and confirm the iframe actually renders and plays; confirm reorder, edit, delete work end-to-end; confirm a prof cannot edit/delete another prof's lesson (test via direct action call or a second seeded prof, since there's no UI path to another prof's course).
+    > Note : la vérification manuelle dans l'application (embed YouTube réel, édition/suppression de bout en bout, leçon d'un autre prof) n'est pas consignée ; cette tâche n'atteste que la non-régression des tests et le build (voir `docs/reviews/s05-video-lessons.md`).
 
 ## Files touched
 - `prisma/schema.prisma` (new `Lesson` model, `Module.lessons` back-relation)

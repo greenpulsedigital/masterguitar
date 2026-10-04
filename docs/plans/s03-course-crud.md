@@ -134,6 +134,6 @@ Branch: `feature/s03-course-crud`
   - [x] Edit updates course
   - [x] Delete removes course (with confirmation)
 - [x] Slug is generated and globally unique (stable on rename)
-- [ ] Mobile responsive (tested at 375px width)
+- [ ] Mobile responsive (tested at 375px width) — **non vérifié** : aucun test responsive ni vérification à 375 px n'est consigné ; la revue `docs/reviews/s03-course-crud.md` le relève comme point mineur (seules des classes mobile-first sont constatées dans le code)
 - [x] TypeScript compiles without errors
 - [x] Committed to `feature/s03-course-crud` branch
