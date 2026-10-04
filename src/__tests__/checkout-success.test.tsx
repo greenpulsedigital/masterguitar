@@ -69,6 +69,8 @@ describe("Checkout Success Page", () => {
     render((await SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_test_123" }) })) as React.ReactElement)
 
     expect(screen.getByText(/paiement en attente/i)).toBeInTheDocument()
+    expect(screen.getByText(/Guitare Débutant/)).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: /retour à l'accueil/i })).toHaveClass("h-11")
     expect(screen.queryByText(/merci pour votre achat/i)).not.toBeInTheDocument()
   })
 

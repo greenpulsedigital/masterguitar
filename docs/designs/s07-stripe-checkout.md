@@ -14,7 +14,7 @@ Page de finalisation du paiement pour un cours publié et payant. Le paiement es
 │  │ Finaliser votre achat       │    │
 │  │                             │    │
 │  │ Nom du cours                │    │
-│  │ 50.00 €                     │    │
+│  │ 50,00 €                     │    │
 │  │                             │    │
 │  │ [ Procéder au paiement ]    │    │
 │  └─────────────────────────────┘    │
@@ -38,14 +38,14 @@ Page de finalisation du paiement pour un cours publié et payant. Le paiement es
    - `CardHeader` contient le `CardTitle` : « Finaliser votre achat ».
    - `CardContent` utilise un espacement vertical `space-y-6`.
    - Le titre du cours est rendu dans un `h2`, en `text-2xl font-bold`, avec le texte réel fourni par le cours.
-   - Le prix est rendu en euros à deux décimales, par exemple « 50.00 € », en `text-3xl font-bold text-primary`.
+   - Le prix est rendu en euros au format français, par exemple « 50,00 € », en `text-3xl font-bold text-primary`.
    - Aucun sous-total, champ de carte, badge ou résumé supplémentaire n'est ajouté : Stripe prend en charge l'étape de paiement.
 
 3. **Action de paiement**
    - `CheckoutButton` utilise le composant `Button`, `size="lg"`, pleine largeur (`w-full`) et la variante par défaut (`default`).
    - Libellé normal : « Procéder au paiement ».
    - Au clic, le bouton appelle l'action serveur puis redirige vers l'URL Stripe retournée.
-   - La cible tactile visée est au minimum de 44 × 44 px. Le design réutilise `size="lg"`; la primitive actuelle doit toutefois être vérifiée car son implémentation rend `h-9` (36 px) avant tout ajustement du design system.
+   - La cible tactile visée est au minimum de 44 × 44 px. Le design réutilise `size="lg"`; comme la primitive actuelle rend `h-9` (36 px), le bouton de cette story force localement `h-11`.
 
 #### États
 
@@ -90,9 +90,9 @@ Page de confirmation après le retour de Stripe. Elle vérifie la session Stripe
 
 - Rendue quand `session.payment_status` n'est pas `paid`.
 - `CardTitle` : « Paiement en attente ».
-- `CardContent` contient le texte `text-lg` : « Votre paiement n'est pas encore confirmé. L'accès au cours sera activé dès sa validation. ».
+- `CardContent` contient le texte `text-lg` : si le cours est disponible, « Votre paiement pour « Guitare Débutant » n'est pas encore confirmé. L'accès au cours sera activé dès sa validation. »; sinon, « Votre paiement n'est pas encore confirmé. L'accès au cours sera activé dès sa validation. ».
 - `Button` + `Link` : « Retour à l'accueil », destination `/`.
-- Le titre du cours n'est pas affiché dans cette variante par le code actuel, même si la session contient un `courseId`.
+- Le titre du cours est affiché quand la session contient un `courseId` résolvable.
 
 #### Variante : cours déjà acheté (`already_purchased=true`)
 
@@ -158,10 +158,10 @@ Le message d'erreur du `CheckoutButton` reste une structure HTML inline avec les
 
 - Ne pas ajouter de nouvelle structure de page : le code actuel rend le titre de l'état via `CardTitle` et le titre du cours via un `h2`. La primitive `CardTitle` actuelle est un `div`; elle ne doit pas être remplacée ici par un composant ou un token inventé. Une sémantique de titre native reste préférable si la primitive est ultérieurement corrigée.
 - Le `Button` de paiement doit rester un vrai bouton clavier, avec son nom accessible « Procéder au paiement » ou « Redirection... » lorsqu'il est désactivé.
-- Pendant le chargement, le bouton est désactivé et le changement de libellé informe les lecteurs d'écran; si le wrapper reçoit `aria-busy="true"`, il doit revenir à `false` à la fin de l'action.
+- Pendant le chargement, le bouton est désactivé et le changement de libellé informe les lecteurs d'écran; le bouton expose `aria-busy="true"`, puis revient à `false` à la fin de l'action.
 - La zone d'erreur doit exposer `role="alert"` et être annoncée sans dépendre de la couleur seule. Le texte `text-destructive` doit rester lisible sur son fond `destructive/10`.
 - Les liens rendus par `Button` gardent une destination accessible et un libellé explicite; aucun bouton icon-only n'est utilisé.
-- Tous les contrôles interactifs doivent viser une cible minimale de 44 × 44 px, un état de focus visible avec `--ring`, et un ordre de tabulation correspondant à l'ordre visuel. Le Button `size="lg"` actuel est visuellement le bon composant mais sa hauteur `h-9` est inférieure à cette cible.
+- Tous les contrôles interactifs doivent viser une cible minimale de 44 × 44 px, un état de focus visible avec `--ring`, et un ordre de tabulation correspondant à l'ordre visuel. Le Button `size="lg"` de la primitive reste en `h-9`, mais les boutons de s07 forcent `h-11` localement.
 - Le contenu est lisible à 375 px sans défilement horizontal. Les titres de cours longs peuvent revenir à la ligne; ils ne sont pas tronqués.
 
 ---
@@ -189,11 +189,10 @@ Les besoins visuels sont couverts par `Card`, `CardHeader`, `CardTitle`, `CardCo
 Deux écarts du socle actuel sont à traiter séparément si l'accessibilité doit être conforme au design system :
 
 - `CardTitle` est implémenté comme un `div` sans rôle de titre; la story conserve cette primitive et ne fabrique pas de composant de remplacement.
-- `Button size="lg"` est implémenté en `h-9` (36 px), alors que la règle mobile-first demande une cible tactile de 44 × 44 px; la correction doit se faire dans la primitive ou son design system, pas par un nouveau token local à cette story.
+- `Button size="lg"` est implémenté en `h-9` (36 px), alors que la règle mobile-first demande une cible tactile de 44 × 44 px; la primitive reste inchangée et les boutons de s07 forcent `h-11` localement.
 
 ## Écarts connus entre le code et le design idéal
 
-- Le code actuel n'ajoute pas encore explicitement `role="alert"` à la zone d'erreur et n'expose pas `aria-busy`; ces attributs sont indiqués dans la spécification d'accessibilité sans changer la structure visuelle.
-- La variante paiement en attente n'affiche pas le titre du cours.
+- `CardTitle` est implémenté comme un `div` sans rôle de titre; la story conserve cette primitive et ne fabrique pas de composant de remplacement.
+- La primitive `Button size="lg"` reste en `h-9` (36 px); les boutons de s07 forcent toutefois `h-11` sans modifier la primitive.
 - La variante `already_purchased=true` ne sait pas quel cours est concerné et renvoie vers l'accueil, comme le code actuel.
-- Le prix utilise actuellement deux décimales avec un point (`50.00 €`), alors que le format français idéal serait une virgule (`50,00 €`). Le design conserve le texte effectivement rendu par le code pour éviter de spécifier un comportement non implémenté.
