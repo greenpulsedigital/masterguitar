@@ -34,3 +34,6 @@ coverage
 *.tsbuildinfo
 dev.db
 *.log
+
+# Graphify (generated knowledge graph)
+graphify-out/
