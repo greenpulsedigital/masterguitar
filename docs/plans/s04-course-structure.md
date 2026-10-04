@@ -10,11 +10,11 @@ Branch: `feature/s04-course-structure`
 **As a** prof **I want** organiser mon cours en modules **so that** les élèves ont une progression claire.
 
 ### Acceptance criteria
-- [ ] Le prof peut ajouter des modules à un cours
-- [ ] Le prof peut renommer un module
-- [ ] Le prof peut réordonner les modules (drag-drop ou boutons up/down)
-- [ ] Le prof peut supprimer un module
-- [ ] Les modules apparaissent dans l'ordre défini
+- [x] Le prof peut ajouter des modules à un cours — `module-crud.test.ts` (createModule : ordre, authentification, rôle, propriété), `module-integration.test.tsx` (bouton d'ajout, appel de `createModule`)
+- [x] Le prof peut renommer un module — `module-crud.test.ts` (updateModule), `module-actions.test.ts` (titre nettoyé, titre d'espaces refusé), `module-integration.test.tsx` (renommage, Entrée, Échap), `module-list-errors.test.tsx` (retour à l'état précédent si l'action échoue)
+- [x] Le prof peut réordonner les modules (drag-drop ou boutons up/down) — `module-crud.test.ts` (échange haut/bas, bornes), `module-actions.test.ts` (transaction, direction invalide), `module-integration.test.tsx` (boutons haut/bas, désactivés aux bornes), `module-list-errors.test.tsx` (retour à l'état précédent)
+- [x] Le prof peut supprimer un module — `module-crud.test.ts` (deleteModule, propriété), `module-integration.test.tsx` (confirmation, suppression, annulation), `module-list-errors.test.tsx` (module restauré si la suppression échoue)
+- [x] Les modules apparaissent dans l'ordre défini — l'ordre est persisté et échangé (`module-crud.test.ts`, `module-actions.test.ts`) et la requête publique trie par `order` croissant (`course-queries.test.ts`) ; le tri de la page d'édition (`src/app/(dashboard)/dashboard/courses/[id]/page.tsx:37`) est vérifié par le code seulement, sans test dédié
 
 ## Tasks (ordered)
 
