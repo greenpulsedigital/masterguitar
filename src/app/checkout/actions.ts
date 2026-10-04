@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { stripe } from "@/lib/stripe"
 import { getCourseById } from "@/lib/queries/course"
+import { getBaseUrl } from "@/lib/app-url"
 
 export async function createCheckoutSession(courseId: string) {
   try {
@@ -24,6 +25,16 @@ export async function createCheckoutSession(courseId: string) {
       return { error: "Ce cours n'est pas disponible à l'achat" }
     }
 
+    // Free courses have no checkout flow yet (Stripe would reject a 0 amount anyway)
+    if (course.price <= 0) {
+      return { error: "Ce cours n'est pas disponible à l'achat" }
+    }
+
+    // A prof cannot buy their own course
+    if (course.profId === session.user.id) {
+      return { error: "Vous ne pouvez pas acheter votre propre cours" }
+    }
+
     // Check if user already owns the course
     const existingPurchase = await prisma.purchase.findFirst({
       where: {
@@ -37,7 +48,7 @@ export async function createCheckoutSession(courseId: string) {
     }
 
     // Create Stripe checkout session
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const baseUrl = getBaseUrl()
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [

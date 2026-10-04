@@ -24,6 +24,16 @@ export default async function CheckoutPage({
     notFound()
   }
 
+  // Free courses have no checkout flow
+  if (course.price <= 0) {
+    notFound()
+  }
+
+  // A prof cannot buy their own course
+  if (course.profId === session.user.id) {
+    redirect(`/cours/${course.slug}`)
+  }
+
   // Check if user already owns the course
   const existingPurchase = await prisma.purchase.findFirst({
     where: {

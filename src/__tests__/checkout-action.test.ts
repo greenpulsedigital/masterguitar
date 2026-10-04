@@ -163,4 +163,28 @@ describe("createCheckoutSession", () => {
       error: "Erreur lors de la création de la session de paiement",
     })
   })
+
+  it("should refuse a prof buying their own course", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "prof-1", email: "prof@test.com", role: "PROF" },
+    } as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
+
+    const result = await createCheckoutSession("course-1")
+
+    expect(result).toEqual({ error: "Vous ne pouvez pas acheter votre propre cours" })
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled()
+  })
+
+  it("should refuse a free course", async () => {
+    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue({ ...mockCourse, price: 0 } as any)
+    vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
+
+    const result = await createCheckoutSession("course-1")
+
+    expect(result).toEqual({ error: "Ce cours n'est pas disponible à l'achat" })
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled()
+  })
 })
