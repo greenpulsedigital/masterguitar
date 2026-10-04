@@ -43,6 +43,8 @@ export function LessonList({ lessons, moduleId }: LessonListProps) {
       return
     }
 
+    const previousItems = items
+
     // Optimistic reorder
     const newItems = [...items]
     const temp = newItems[currentIndex]
@@ -54,7 +56,11 @@ export function LessonList({ lessons, moduleId }: LessonListProps) {
     formData.set("id", lessonId)
     formData.set("direction", direction)
 
-    await reorderLesson(formData)
+    // On success the action redirects; a returned value means it failed
+    const result = await reorderLesson(formData)
+    if (result?.error) {
+      setItems(previousItems)
+    }
   }
 
   const handleEditClick = (lesson: Lesson) => {

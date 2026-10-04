@@ -127,6 +127,9 @@ export function LessonFormDialog({
             {videoUrl ? (
               <iframe
                 src={videoUrl}
+                sandbox="allow-scripts allow-same-origin allow-presentation"
+                allow="fullscreen"
+                referrerPolicy="strict-origin-when-cross-origin"
                 className="aspect-video w-full rounded-md border"
               />
             ) : (

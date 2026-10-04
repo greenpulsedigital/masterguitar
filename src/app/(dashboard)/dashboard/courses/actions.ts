@@ -358,7 +358,13 @@ export async function reorderModule(formData: FormData) {
 const lessonSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
   description: z.string().optional(),
-  videoUrl: z.string().url().optional().or(z.literal("")),
+  // External hosts are allowed (ADR 005) but only over https, so javascript:/data: URLs can't reach the iframe
+  videoUrl: z
+    .string()
+    .url()
+    .refine((value) => value.startsWith("https://"), "L'URL vidéo doit commencer par https://")
+    .optional()
+    .or(z.literal("")),
 })
 
 export async function createLesson(formData: FormData) {
@@ -414,11 +420,11 @@ export async function createLesson(formData: FormData) {
         moduleId,
       },
     })
-
-    redirect(`/dashboard/courses/${courseModule.courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la création de la leçon" }
   }
+
+  redirect(`/dashboard/courses/${courseModule.courseId}`)
 }
 
 export async function updateLesson(formData: FormData) {
@@ -467,11 +473,11 @@ export async function updateLesson(formData: FormData) {
         videoUrl: videoUrl || null,
       },
     })
-
-    redirect(`/dashboard/courses/${lesson.module.courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la mise à jour de la leçon" }
   }
+
+  redirect(`/dashboard/courses/${lesson.module.courseId}`)
 }
 
 export async function deleteLesson(formData: FormData) {
@@ -501,11 +507,11 @@ export async function deleteLesson(formData: FormData) {
     await prisma.lesson.delete({
       where: { id },
     })
-
-    redirect(`/dashboard/courses/${lesson.module.courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la suppression de la leçon" }
   }
+
+  redirect(`/dashboard/courses/${lesson.module.courseId}`)
 }
 
 export async function reorderLesson(formData: FormData) {
@@ -516,7 +522,11 @@ export async function reorderLesson(formData: FormData) {
   }
 
   const id = formData.get("id") as string
-  const direction = formData.get("direction") as "up" | "down"
+  const direction = formData.get("direction")
+
+  if (direction !== "up" && direction !== "down") {
+    return { error: "Direction invalide" }
+  }
 
   // Get lesson with module, course and all sibling lessons
   const lesson = await prisma.lesson.findUnique({
@@ -557,22 +567,23 @@ export async function reorderLesson(formData: FormData) {
   const adjacentIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
   const adjacentLesson = lessons[adjacentIndex]
 
-  // Swap orders
+  // Swap orders atomically
   try {
-    await prisma.lesson.update({
-      where: { id: lesson.id },
-      data: { order: adjacentLesson.order },
-    })
-
-    await prisma.lesson.update({
-      where: { id: adjacentLesson.id },
-      data: { order: lesson.order },
-    })
-
-    redirect(`/dashboard/courses/${lesson.module.courseId}`)
+    await prisma.$transaction([
+      prisma.lesson.update({
+        where: { id: lesson.id },
+        data: { order: adjacentLesson.order },
+      }),
+      prisma.lesson.update({
+        where: { id: adjacentLesson.id },
+        data: { order: lesson.order },
+      }),
+    ])
   } catch (error) {
     return { error: "Erreur lors du réordonnancement de la leçon" }
   }
+
+  redirect(`/dashboard/courses/${lesson.module.courseId}`)
 }
 
 export async function toggleCourseStatus(formData: FormData) {
