@@ -58,8 +58,15 @@ describe("getCourseBySlug", () => {
         slug: "guitare-debutant",
         status: "PUBLISHED",
       },
-      include: {
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        price: true,
+        thumbnailUrl: true,
         modules: {
+          select: { id: true, title: true, order: true },
           orderBy: {
             order: "asc",
           },
@@ -71,6 +78,19 @@ describe("getCourseBySlug", () => {
         },
       },
     })
+  })
+
+  it("should only select public fields (no lessons, videoUrl, profId or prof email)", async () => {
+    vi.mocked(prisma.course.findFirst).mockResolvedValueOnce(null)
+
+    await getCourseBySlug("any-course")
+
+    const args = vi.mocked(prisma.course.findFirst).mock.calls.at(-1)![0] as any
+    expect(args.include).toBeUndefined()
+    expect(args.select).not.toHaveProperty("profId")
+    expect(args.select.modules.select).not.toHaveProperty("lessons")
+    expect(JSON.stringify(args.select)).not.toMatch(/videoUrl|lessons|email/)
+    expect(args.select.prof.select).toEqual({ name: true })
   })
 
   it("should return null for non-existent course", async () => {
@@ -124,12 +144,12 @@ describe("getCourseBySlug", () => {
 
     expect(prisma.course.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
-        include: expect.objectContaining({
-          modules: {
+        select: expect.objectContaining({
+          modules: expect.objectContaining({
             orderBy: {
               order: "asc",
             },
-          },
+          }),
         }),
       })
     )
