@@ -26,6 +26,17 @@ enum PaymentIssueStatus {
   RESOLVED
 }
 
+enum StripeMode {
+  TEST
+  LIVE
+}
+
+enum StripeAccountStatus {
+  ACTIVE
+  INVALID
+  DISCONNECTING
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -37,6 +48,7 @@ model User {
 
   courses      Course[]
   purchases    Purchase[]
+  stripeAccount ProfStripeAccount?
 }
 
 enum CourseStatus {
@@ -107,4 +119,33 @@ model PaymentIssue {
   courseId        String
   createdAt       DateTime          @default(now())
   resolvedAt      DateTime?
+}
+
+// Compte Stripe d'un prof (ADR 004) : les secrets sont chiffrés par src/lib/stripe-keys.ts
+model ProfStripeAccount {
+  id                     String              @id @default(cuid())
+  profId                 String              @unique
+  prof                   User                @relation(fields: [profId], references: [id], onDelete: Cascade)
+  stripeAccountId        String
+  mode                   StripeMode
+  status                 StripeAccountStatus @default(ACTIVE)
+  keyLast4               String
+  encryptedSecretKey     String
+  webhookEndpointId      String?
+  encryptedWebhookSecret String?
+  encryptionKeyVersion   Int
+  reconcileUntil         DateTime?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  @@unique([stripeAccountId, mode])
+}
+
+// Compteurs de limitation de débit (fenêtre fixe), partagés entre instances
+model RateLimit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(0)
+
+  @@id([key, windowStart])
 }
