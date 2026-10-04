@@ -26,7 +26,7 @@ Branch: `feature/s03-course-crud`
    - Add `Course` model with: id, slug, title, description, price, thumbnailUrl, status, profId, timestamps
    - Add `CourseStatus` enum (DRAFT, PUBLISHED)
    - Add relation `User.courses` (one-to-many)
-   - Use `@@unique([profId, slug])` for scoped slug uniqueness
+   - Use `slug String @unique` for global slug uniqueness (ADR 006); collisions get a `-2`, `-3`… suffix, slug stays stable on rename
    - Run `npx prisma migrate dev --name add_course_model`
    - Verify: migration succeeds, Prisma client regenerates
 
@@ -133,7 +133,7 @@ Branch: `feature/s03-course-crud`
   - [x] List shows all user's courses
   - [x] Edit updates course
   - [x] Delete removes course (with confirmation)
-- [x] Slug is generated and unique per prof
+- [x] Slug is generated and globally unique (stable on rename)
 - [ ] Mobile responsive (tested at 375px width)
 - [x] TypeScript compiles without errors
 - [x] Committed to `feature/s03-course-crud` branch

@@ -21,6 +21,9 @@ vi.mock("@/lib/prisma", () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    purchase: {
+      count: vi.fn(() => Promise.resolve(0)),
+    },
   },
 }))
 
@@ -194,7 +197,6 @@ describe("Course CRUD operations", () => {
         where: { id: "course-1" },
         data: {
           title: "Updated Title",
-          slug: generateSlug("Updated Title"),
           description: "Updated description",
           price: 9999,
           thumbnailUrl: null,

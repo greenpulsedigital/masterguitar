@@ -2,7 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { generateSlug } from "@/lib/slug"
+import { generateUniqueSlug } from "@/lib/course-slug"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 
@@ -41,12 +41,12 @@ export async function createCourse(formData: FormData) {
     return { error: validation.error.issues[0].message }
   }
 
-  // Generate slug from title
-  const slug = generateSlug(title)
+  const slug = await generateUniqueSlug(title)
 
+  let course
   try {
     // Create course
-    const course = await prisma.course.create({
+    course = await prisma.course.create({
       data: {
         title,
         slug,
@@ -57,11 +57,11 @@ export async function createCourse(formData: FormData) {
         profId: session.user.id,
       },
     })
-
-    redirect(`/dashboard/courses/${course.id}`)
   } catch (error) {
     return { error: "Erreur lors de la création du cours" }
   }
+
+  redirect(`/dashboard/courses/${course.id}`)
 }
 
 export async function updateCourse(formData: FormData) {
@@ -105,25 +105,22 @@ export async function updateCourse(formData: FormData) {
     return { error: "Vous n'êtes pas autorisé à modifier ce cours" }
   }
 
-  // Generate slug from title
-  const slug = generateSlug(title)
-
+  // The slug is intentionally left untouched: renaming a course must not break its public URL
   try {
     await prisma.course.update({
       where: { id },
       data: {
         title,
-        slug,
         description: description || null,
         price,
         thumbnailUrl: thumbnailUrl || null,
       },
     })
-
-    redirect("/dashboard/courses")
   } catch (error) {
     return { error: "Erreur lors de la mise à jour du cours" }
   }
+
+  redirect("/dashboard/courses")
 }
 
 export async function deleteCourse(formData: FormData) {
@@ -148,15 +145,26 @@ export async function deleteCourse(formData: FormData) {
     return { error: "Vous n'êtes pas autorisé à supprimer ce cours" }
   }
 
+  const purchaseCount = await prisma.purchase.count({
+    where: { courseId: id },
+  })
+
+  if (purchaseCount > 0) {
+    return {
+      error:
+        "Ce cours a déjà été acheté et ne peut pas être supprimé. Repassez-le en brouillon pour le retirer de la vente.",
+    }
+  }
+
   try {
     await prisma.course.delete({
       where: { id },
     })
-
-    redirect("/dashboard/courses")
   } catch (error) {
     return { error: "Erreur lors de la suppression du cours" }
   }
+
+  redirect("/dashboard/courses")
 }
 
 // Module actions
@@ -198,11 +206,11 @@ export async function createModule(formData: FormData) {
         courseId,
       },
     })
-
-    redirect(`/dashboard/courses/${courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la création du module" }
   }
+
+  redirect(`/dashboard/courses/${courseId}`)
 }
 
 export async function updateModule(formData: FormData) {
@@ -238,11 +246,11 @@ export async function updateModule(formData: FormData) {
       where: { id },
       data: { title },
     })
-
-    redirect(`/dashboard/courses/${module.courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la mise à jour du module" }
   }
+
+  redirect(`/dashboard/courses/${module.courseId}`)
 }
 
 export async function deleteModule(formData: FormData) {
@@ -272,11 +280,11 @@ export async function deleteModule(formData: FormData) {
     await prisma.module.delete({
       where: { id },
     })
-
-    redirect(`/dashboard/courses/${module.courseId}`)
   } catch (error) {
     return { error: "Erreur lors de la suppression du module" }
   }
+
+  redirect(`/dashboard/courses/${module.courseId}`)
 }
 
 export async function reorderModule(formData: FormData) {
@@ -338,11 +346,11 @@ export async function reorderModule(formData: FormData) {
       where: { id: adjacentModule.id },
       data: { order: module.order },
     })
-
-    redirect(`/dashboard/courses/${module.courseId}`)
   } catch (error) {
     return { error: "Erreur lors du réordonnancement du module" }
   }
+
+  redirect(`/dashboard/courses/${module.courseId}`)
 }
 
 // Lesson actions
@@ -597,9 +605,9 @@ export async function toggleCourseStatus(formData: FormData) {
       where: { id },
       data: { status: newStatus },
     })
-
-    redirect(`/dashboard/courses/${id}`)
   } catch (error) {
     return { error: "Erreur lors du changement de statut du cours" }
   }
+
+  redirect(`/dashboard/courses/${id}`)
 }
