@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>s05-video-lessons — Mockup</title>
+  <style>
+    /* Design System Tokens — docs/design-system.md (Bois & Ambre, light only) */
+    :root {
+      --background: #fbf6ee;
+      --foreground: #332417;
+      --card: #ffffff;
+      --card-foreground: #332417;
+      --muted: #f3ead9;
+      --muted-foreground: #7a6c56;
+      --border: #ecdfc9;
+      --primary: #a3632a;
+      --primary-foreground: #fffaf3;
+      --secondary: #f3ead9;
+      --accent: #f0dcc4;
+      --accent-foreground: #5c3a1c;
+      --destructive: #c0392b;
+      --ring: #a3632a;
+      --radius: 0.625rem;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    @media (min-width: 768px) { body { padding: 24px; } }
+
+    .container { max-width: 672px; margin: 0 auto; }
+
+    .demo-label {
+      font-size: 12px;
+      color: var(--primary);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+    .btn-ghost { background: transparent; color: var(--muted-foreground); padding: 6px; }
+    .btn-ghost:hover { background: var(--accent); color: var(--accent-foreground); }
+    .btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-icon { width: 30px; height: 30px; padding: 0; }
+    .btn-icon-sm { width: 26px; height: 26px; padding: 0; }
+    .btn-destructive { background: var(--destructive); color: var(--primary-foreground); }
+    .btn-destructive-sm { background: transparent; color: var(--muted-foreground); padding: 6px; }
+    .btn-destructive-sm:hover { color: var(--destructive); }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 24px;
+    }
+    @media (min-width: 768px) { .card { padding: 24px; } }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title { font-size: 20px; font-weight: 600; }
+    .sub-section-title { font-size: 14px; font-weight: 600; color: var(--muted-foreground); }
+
+    /* Module list & row */
+    .module-list { display: flex; flex-direction: column; gap: 12px; }
+    .module-block {
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .module-row { display: flex; align-items: center; gap: 8px; }
+    .module-controls, .lesson-controls { display: flex; gap: 4px; }
+    .module-title { flex: 1; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .module-title:hover { color: var(--primary); }
+
+    /* Nested lessons sub-block */
+    .lessons-subblock {
+      margin-top: 12px;
+      margin-left: 32px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+    .lessons-subheader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .lesson-list { display: flex; flex-direction: column; gap: 6px; }
+    .lesson-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+    }
+    .lesson-title { flex: 1; font-size: 13px; }
+
+    /* Empty state (nested, compact) */
+    .empty-state-sm { text-align: center; padding: 14px 8px; }
+    .empty-icon-sm { font-size: 24px; margin-bottom: 6px; opacity: 0.5; }
+    .empty-title-sm { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .empty-description-sm { font-size: 12px; color: var(--muted-foreground); }
+
+    /* Dialog (Add/Edit Lesson) */
+    .dialog-overlay {
+      background: rgba(51, 36, 23, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .dialog-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      max-width: 480px;
+      margin: 24px auto 0;
+      overflow: hidden;
+    }
+    .dialog-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .dialog-title { font-size: 18px; font-weight: 600; }
+    .dialog-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .dialog-footer {
+      padding: 16px 20px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 13px; font-weight: 500; }
+    .field input, .field textarea {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 14px;
+      color: var(--foreground);
+      font-family: inherit;
+      outline: none;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 30%, transparent);
+    }
+    .field textarea { resize: vertical; min-height: 60px; }
+
+    /* Video preview */
+    .preview-frame {
+      aspect-ratio: 16 / 9;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+    .preview-frame.has-video {
+      background: #1a1a1a;
+      color: #fff;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .icon { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- STATE 1: Modules with nested lessons -->
+    <div class="card">
+      <p class="demo-label">State: Modules avec leçons</p>
+
+      <div class="section-header">
+        <h2 class="section-title">Modules</h2>
+        <button class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter un module
+        </button>
+      </div>
+
+      <div class="module-list">
+        <!-- Module 1 with lessons -->
+        <div class="module-block">
+          <div class="module-row">
+            <div class="module-controls">
+              <button class="btn btn-ghost btn-icon" disabled title="Monter">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-icon" title="Descendre">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span class="module-title">Introduction à la guitare</span>
+            <button class="btn btn-destructive-sm btn-icon" title="Supprimer">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+
+          <div class="lessons-subblock">
+            <div class="lessons-subheader">
+              <span class="sub-section-title">Leçons</span>
+              <button class="btn btn-outline btn-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Ajouter une leçon
+              </button>
+            </div>
+            <div class="lesson-list">
+              <div class="lesson-row">
+                <div class="lesson-controls">
+                  <button class="btn btn-ghost btn-icon-sm" disabled title="Monter">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+                  </button>
+                  <button class="btn btn-ghost btn-icon-sm" title="Descendre">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                </div>
+                <span class="lesson-title">Comment tenir sa guitare</span>
+                <button class="btn btn-ghost btn-icon-sm" title="Modifier">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-destructive-sm btn-icon-sm" title="Supprimer">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </div>
+              <div class="lesson-row">
+                <div class="lesson-controls">
+                  <button class="btn btn-ghost btn-icon-sm" title="Monter">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+                  </button>
+                  <button class="btn btn-ghost btn-icon-sm" disabled title="Descendre">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                </div>
+                <span class="lesson-title">Les premières notes</span>
+                <button class="btn btn-ghost btn-icon-sm" title="Modifier">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-destructive-sm btn-icon-sm" title="Supprimer">
+                  <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Module 2 - empty lessons -->
+        <div class="module-block">
+          <div class="module-row">
+            <div class="module-controls">
+              <button class="btn btn-ghost btn-icon" title="Monter">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-icon" disabled title="Descendre">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <span class="module-title">Les accords de base</span>
+            <button class="btn btn-destructive-sm btn-icon" title="Supprimer">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+          </div>
+
+          <div class="lessons-subblock">
+            <div class="lessons-subheader">
+              <span class="sub-section-title">Leçons</span>
+              <button class="btn btn-outline btn-sm">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Ajouter une leçon
+              </button>
+            </div>
+            <div class="empty-state-sm">
+              <div class="empty-icon-sm">🎬</div>
+              <p class="empty-title-sm">Aucune leçon</p>
+              <p class="empty-description-sm">Ajoutez des leçons vidéo à ce module.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- STATE 2: Add/Edit Lesson dialog, with video preview -->
+    <p class="demo-label" style="margin-top: -8px;">State: Dialog — Ajouter/modifier une leçon (avec aperçu vidéo)</p>
+    <div class="dialog-overlay">
+      <div class="dialog-card">
+        <div class="dialog-header">
+          <span class="dialog-title">Modifier la leçon</span>
+          <button class="btn btn-ghost btn-icon" title="Fermer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>Titre</label>
+            <input type="text" value="Comment tenir sa guitare">
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea>Apprenez la posture correcte pour tenir votre guitare, assis et debout.</textarea>
+          </div>
+          <div class="field">
+            <label>URL vidéo</label>
+            <input type="url" value="https://www.youtube.com/embed/dQw4w9WgXcQ">
+          </div>
+          <div class="field">
+            <label>Aperçu</label>
+            <div class="preview-frame has-video">
+              <svg class="icon" viewBox="0 0 24 24" style="width:28px;height:28px;"><path d="M5 3l14 9-14 9V3z"/></svg>
+              <span>Aperçu vidéo (iframe)</span>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-outline">Annuler</button>
+          <button class="btn btn-primary">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- STATE 3: Dialog empty / no video URL yet -->
+    <p class="demo-label" style="margin-top: -8px;">State: Dialog — Ajouter une leçon (sans URL vidéo)</p>
+    <div class="dialog-overlay">
+      <div class="dialog-card">
+        <div class="dialog-header">
+          <span class="dialog-title">Ajouter une leçon</span>
+          <button class="btn btn-ghost btn-icon" title="Fermer">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>Titre</label>
+            <input type="text" placeholder="Titre de la leçon">
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea placeholder="Description de la leçon (optionnel)"></textarea>
+          </div>
+          <div class="field">
+            <label>URL vidéo</label>
+            <input type="url" placeholder="https://...">
+          </div>
+          <div class="field">
+            <label>Aperçu</label>
+            <div class="preview-frame">
+              Ajoutez une URL vidéo pour voir l'aperçu
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-outline">Annuler</button>
+          <button class="btn btn-primary">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
