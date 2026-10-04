@@ -1,18 +1,32 @@
+import { cache } from "react"
 import { prisma } from "@/lib/prisma"
 
 /**
- * Get a published course by slug with modules and prof name
+ * Get a published course by slug with modules and prof name.
+ * Public page: only whitelisted fields are selected (no profId, no lessons/videoUrl).
+ * Memoized per request so generateMetadata and the page share a single query.
  * @param slug - Course slug
  * @returns Course with modules and prof, or null if not found or not published
  */
-export async function getCourseBySlug(slug: string) {
+export const getCourseBySlug = cache(async (slug: string) => {
   return prisma.course.findFirst({
     where: {
       slug,
       status: "PUBLISHED",
     },
-    include: {
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      price: true,
+      thumbnailUrl: true,
       modules: {
+        select: {
+          id: true,
+          title: true,
+          order: true,
+        },
         orderBy: {
           order: "asc",
         },
@@ -24,7 +38,7 @@ export async function getCourseBySlug(slug: string) {
       },
     },
   })
-}
+})
 
 /**
  * Get a course by ID (for checkout validation)

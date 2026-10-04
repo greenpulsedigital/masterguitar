@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+import Image from "next/image"
 import { notFound } from "next/navigation"
 import { getCourseBySlug } from "@/lib/queries/course"
 import { formatPrice } from "@/lib/format"
@@ -5,6 +7,51 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+
+const META_DESCRIPTION_MAX = 160
+
+function toMetaDescription(description: string | null, title: string) {
+  const text = (description ?? "").replace(/\s+/g, " ").trim()
+  if (!text) return `Découvrez le cours « ${title} » sur MasterGuitar.`
+  return text.length > META_DESCRIPTION_MAX
+    ? `${text.slice(0, META_DESCRIPTION_MAX - 1).trimEnd()}…`
+    : text
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const { slug } = await params
+  const course = await getCourseBySlug(slug)
+
+  if (!course) {
+    return { title: "Cours introuvable" }
+  }
+
+  const description = toMetaDescription(course.description, course.title)
+  const images = course.thumbnailUrl ? [{ url: course.thumbnailUrl }] : undefined
+
+  return {
+    title: course.title,
+    description,
+    openGraph: {
+      type: "website",
+      locale: "fr_FR",
+      siteName: "MasterGuitar",
+      title: course.title,
+      description,
+      images,
+    },
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title: course.title,
+      description,
+      images: images?.map((image) => image.url),
+    },
+  }
+}
 
 export default async function CourseSalesPage({
   params,
@@ -20,15 +67,20 @@ export default async function CourseSalesPage({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24 lg:pb-0">
       {/* Hero / Thumbnail */}
       <div className="w-full">
         {course.thumbnailUrl ? (
-          <div className="aspect-video w-full bg-muted">
-            <img
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+            {/* Thumbnails are prof-provided URLs on arbitrary hosts, so the image optimizer is bypassed */}
+            <Image
               src={course.thumbnailUrl}
               alt={course.title}
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              priority
+              sizes="(min-width: 1152px) 1152px, 100vw"
+              className="object-cover"
             />
           </div>
         ) : (
@@ -46,9 +98,9 @@ export default async function CourseSalesPage({
             {/* Title + Prof */}
             <div className="space-y-2">
               <h1 className="text-3xl md:text-4xl font-bold">{course.title}</h1>
-              {course.prof.name && (
-                <p className="text-muted-foreground">par {course.prof.name}</p>
-              )}
+              <p className="text-muted-foreground">
+                par {course.prof.name ?? "Instructeur"}
+              </p>
             </div>
 
             {/* Description */}
@@ -85,7 +137,7 @@ export default async function CourseSalesPage({
           </div>
 
           {/* Right Column - Sticky Sidebar (desktop) */}
-          <div className="lg:col-span-1">
+          <div className="hidden lg:block lg:col-span-1">
             <div className="lg:sticky lg:top-8">
               <Card>
                 <CardHeader>
@@ -94,7 +146,7 @@ export default async function CourseSalesPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Button render={<Link href={`/checkout/${course.id}`} />} className="w-full" size="lg">
+                  <Button render={<Link href={`/checkout/${course.id}`} />} className="w-full h-11" size="lg">
                     Acheter
                   </Button>
                 </CardContent>
@@ -111,7 +163,7 @@ export default async function CourseSalesPage({
             <p className="text-sm text-muted-foreground">Prix</p>
             <p className="text-xl font-semibold">{formatPrice(course.price)}</p>
           </div>
-          <Button render={<Link href={`/checkout/${course.id}`} />} size="lg">
+          <Button render={<Link href={`/checkout/${course.id}`} />} size="lg" className="h-11 px-6">
             Acheter
           </Button>
         </div>
