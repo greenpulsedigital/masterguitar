@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Types, tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Dummy values: the build only needs them to exist, nothing calls Stripe or the database
+      STRIPE_SECRET_KEY: sk_test_ci
+      STRIPE_WEBHOOK_SECRET: whsec_ci
+      AUTH_SECRET: ci-secret
+      NEXTAUTH_SECRET: ci-secret
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The Prisma client is generated into src/generated (git-ignored)
+      - run: npx prisma generate
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
+
+  lint:
+    name: Lint (non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The codebase still has ~235 ESLint errors (mostly `any` in tests): report them without failing the PR.
+    # Remove continue-on-error once they are cleaned up.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
