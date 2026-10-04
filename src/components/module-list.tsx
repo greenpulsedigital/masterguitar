@@ -43,6 +43,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
   const [editingTitle, setEditingTitle] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleStartEdit = (module: Module) => {
     setEditingId(module.id)
@@ -55,19 +56,28 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
   }
 
   const handleSaveEdit = async (moduleId: string) => {
-    if (editingTitle.trim() === "") {
+    const title = editingTitle.trim()
+    if (title === "") {
       return
     }
 
+    const previousItems = items
+
     // Optimistic update
-    setItems(prev => prev.map(m => m.id === moduleId ? { ...m, title: editingTitle } : m))
+    setError(null)
+    setItems(prev => prev.map(m => m.id === moduleId ? { ...m, title } : m))
     setEditingId(null)
 
     const formData = new FormData()
     formData.set("id", moduleId)
-    formData.set("title", editingTitle)
+    formData.set("title", title)
 
-    await updateModule(formData)
+    // On success the action redirects; a returned value means it failed
+    const result = await updateModule(formData)
+    if (result?.error) {
+      setItems(previousItems)
+      setError(result.error)
+    }
   }
 
   const handleReorder = async (moduleId: string, direction: "up" | "down") => {
@@ -78,7 +88,10 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
       return
     }
 
+    const previousItems = items
+
     // Optimistic reorder
+    setError(null)
     const newItems = [...items]
     const temp = newItems[currentIndex]
     newItems[currentIndex] = newItems[targetIndex]
@@ -89,7 +102,11 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
     formData.set("id", moduleId)
     formData.set("direction", direction)
 
-    await reorderModule(formData)
+    const result = await reorderModule(formData)
+    if (result?.error) {
+      setItems(previousItems)
+      setError(result.error)
+    }
   }
 
   const handleDeleteClick = (moduleId: string) => {
@@ -100,14 +117,21 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
   const handleDeleteConfirm = async () => {
     if (!moduleToDelete) return
 
+    const previousItems = items
+
     // Optimistic delete
+    setError(null)
     setItems(prev => prev.filter(m => m.id !== moduleToDelete))
     setDeleteDialogOpen(false)
 
     const formData = new FormData()
     formData.set("id", moduleToDelete)
 
-    await deleteModule(formData)
+    const result = await deleteModule(formData)
+    if (result?.error) {
+      setItems(previousItems)
+      setError(result.error)
+    }
     setModuleToDelete(null)
   }
 
@@ -118,6 +142,11 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
 
   return (
     <>
+      {error && (
+        <div role="alert" className="mb-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
       <div className="space-y-2">
         {items.map((module, index) => (
           <div
@@ -131,6 +160,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => handleReorder(module.id, "up")}
+                  aria-label="Monter le module"
                   disabled={index === 0}
                 >
                   <ChevronUp className="h-4 w-4" />
@@ -140,6 +170,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => handleReorder(module.id, "down")}
+                  aria-label="Descendre le module"
                   disabled={index === items.length - 1}
                 >
                   <ChevronDown className="h-4 w-4" />
@@ -160,6 +191,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                       }
                     }}
                     autoFocus
+                    aria-label="Titre du module"
                     className="h-8"
                   />
                 ) : (
@@ -178,6 +210,7 @@ export function ModuleList({ modules, courseId }: ModuleListProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleDeleteClick(module.id)}
+                aria-label="Supprimer le module"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

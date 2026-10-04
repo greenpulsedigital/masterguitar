@@ -221,9 +221,9 @@ export async function updateModule(formData: FormData) {
   }
 
   const id = formData.get("id") as string
-  const title = formData.get("title") as string
+  const title = ((formData.get("title") as string) || "").trim()
 
-  if (!title || title.trim() === "") {
+  if (title === "") {
     return { error: "Le titre est requis" }
   }
 
@@ -295,7 +295,11 @@ export async function reorderModule(formData: FormData) {
   }
 
   const id = formData.get("id") as string
-  const direction = formData.get("direction") as "up" | "down"
+  const direction = formData.get("direction")
+
+  if (direction !== "up" && direction !== "down") {
+    return { error: "Direction invalide" }
+  }
 
   // Get module with course and all modules
   const module = await prisma.module.findUnique({
@@ -335,17 +339,18 @@ export async function reorderModule(formData: FormData) {
   const adjacentIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
   const adjacentModule = modules[adjacentIndex]
 
-  // Swap orders
+  // Swap orders atomically
   try {
-    await prisma.module.update({
-      where: { id: module.id },
-      data: { order: adjacentModule.order },
-    })
-
-    await prisma.module.update({
-      where: { id: adjacentModule.id },
-      data: { order: module.order },
-    })
+    await prisma.$transaction([
+      prisma.module.update({
+        where: { id: module.id },
+        data: { order: adjacentModule.order },
+      }),
+      prisma.module.update({
+        where: { id: adjacentModule.id },
+        data: { order: module.order },
+      }),
+    ])
   } catch (error) {
     return { error: "Erreur lors du réordonnancement du module" }
   }
