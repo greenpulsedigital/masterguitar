@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { BookOpen, Trash2 } from "lucide-react"
@@ -31,7 +31,7 @@ export default async function CoursesPage() {
       {courses.length === 0 ? (
         <Card className="p-8 text-center">
           <BookOpen className="size-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium mb-2">Aucun cours pour l'instant</p>
+          <p className="text-lg font-medium mb-2">Aucun cours pour l&apos;instant</p>
           <p className="text-muted-foreground mb-4">
             Créez votre premier cours pour commencer
           </p>

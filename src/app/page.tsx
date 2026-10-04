@@ -5,7 +5,7 @@ export default function Home() {
         Bienvenue sur MasterGuitar
       </h1>
       <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-        Plateforme d'apprentissage de la guitare en ligne
+        Plateforme d&apos;apprentissage de la guitare en ligne
       </p>
     </div>
   );

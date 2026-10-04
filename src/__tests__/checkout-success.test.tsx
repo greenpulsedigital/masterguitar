@@ -26,11 +26,15 @@ import { auth } from "@/lib/auth"
 import { getCourseById } from "@/lib/queries/course"
 import { stripe } from "@/lib/stripe"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type CourseResult = Awaited<ReturnType<typeof getCourseById>>
+type StripeSessionResult = Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>>
+
 describe("Checkout Success Page", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as any)
-    vi.mocked(getCourseById).mockResolvedValue({ id: "course-1", title: "Guitare Débutant" } as any)
+    vi.mocked(auth).mockResolvedValue({ user: { id: "user-1" } } as unknown as AuthResult)
+    vi.mocked(getCourseById).mockResolvedValue({ id: "course-1", title: "Guitare Débutant" } as unknown as CourseResult)
   })
 
   it("should render success message with course info", async () => {
@@ -44,7 +48,7 @@ describe("Checkout Success Page", () => {
       amount_total: 5000,
     }
 
-    vi.mocked(stripe.checkout.sessions.retrieve).mockResolvedValue(mockSession as any)
+    vi.mocked(stripe.checkout.sessions.retrieve).mockResolvedValue(mockSession as unknown as StripeSessionResult)
 
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
@@ -63,7 +67,7 @@ describe("Checkout Success Page", () => {
       id: "cs_test_123",
       payment_status: "unpaid",
       metadata: { courseId: "course-1", userId: "user-1" },
-    } as any)
+    } as unknown as StripeSessionResult)
 
     const SuccessPage = (await import("@/app/checkout/success/page")).default
     render((await SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_test_123" }) })) as React.ReactElement)
@@ -79,7 +83,7 @@ describe("Checkout Success Page", () => {
       id: "cs_test_123",
       payment_status: "paid",
       metadata: { courseId: "course-1", userId: "someone-else" },
-    } as any)
+    } as unknown as StripeSessionResult)
 
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 
@@ -89,7 +93,7 @@ describe("Checkout Success Page", () => {
   })
 
   it("should redirect to login when not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null as any)
+    vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
     const SuccessPage = (await import("@/app/checkout/success/page")).default
 

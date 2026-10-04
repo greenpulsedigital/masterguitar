@@ -4,6 +4,8 @@
  */
 import { describe, it, expect } from 'vitest'
 import * as bcrypt from 'bcryptjs'
+import * as fs from 'fs'
+import * as path from 'path'
 
 describe('Task 12: Integration tests for auth flow', () => {
   describe('Signup flow', () => {
@@ -47,8 +49,6 @@ describe('Task 12: Integration tests for auth flow', () => {
 
   describe('Protected routes', () => {
     it('should have middleware configured for dashboard', () => {
-      const fs = require('fs')
-      const path = require('path')
       const middlewarePath = path.resolve(process.cwd(), 'middleware.ts')
 
       const content = fs.readFileSync(middlewarePath, 'utf-8')
@@ -61,8 +61,6 @@ describe('Task 12: Integration tests for auth flow', () => {
 
   describe('File structure verification', () => {
     it('should have all required auth files', () => {
-      const fs = require('fs')
-      const path = require('path')
 
       const files = [
         'src/lib/auth.ts',
@@ -83,8 +81,6 @@ describe('Task 12: Integration tests for auth flow', () => {
     })
 
     it('should have shadcn UI components installed', () => {
-      const fs = require('fs')
-      const path = require('path')
 
       const components = [
         'src/components/ui/button.tsx',

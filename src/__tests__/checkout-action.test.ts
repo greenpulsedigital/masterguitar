@@ -31,6 +31,11 @@ import { prisma } from "@/lib/prisma"
 import { stripe } from "@/lib/stripe"
 import { createCheckoutSession } from "@/app/checkout/actions"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+type PurchaseResult = Awaited<ReturnType<typeof prisma.purchase.findFirst>>
+type StripeCheckoutResult = Awaited<ReturnType<typeof stripe.checkout.sessions.create>>
+
 describe("createCheckoutSession", () => {
   const mockUser = {
     user: {
@@ -54,12 +59,12 @@ describe("createCheckoutSession", () => {
   })
 
   it("should create checkout session for authenticated user with valid course", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null) // No existing purchase
     vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
       url: "https://checkout.stripe.com/session_123",
-    } as any)
+    } as unknown as StripeCheckoutResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -91,7 +96,7 @@ describe("createCheckoutSession", () => {
   })
 
   it("should return error when user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null as any)
+    vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -102,7 +107,7 @@ describe("createCheckoutSession", () => {
   })
 
   it("should return error when course not found", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
 
     const result = await createCheckoutSession("non-existent")
@@ -114,11 +119,11 @@ describe("createCheckoutSession", () => {
   })
 
   it("should return error when course is not published", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(prisma.course.findUnique).mockResolvedValue({
       ...mockCourse,
       status: "DRAFT" as const,
-    } as any)
+    } as unknown as CourseResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -129,8 +134,8 @@ describe("createCheckoutSession", () => {
   })
 
   it("should return error when user already owns the course", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue({
       id: "purchase-1",
       userId: "user-1",
@@ -139,7 +144,7 @@ describe("createCheckoutSession", () => {
       stripePaymentId: "pi_123",
       stripeSessionId: "cs_123",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -150,8 +155,8 @@ describe("createCheckoutSession", () => {
   })
 
   it("should handle Stripe errors gracefully", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
     vi.mocked(stripe.checkout.sessions.create).mockRejectedValue(
       new Error("Stripe API error")
@@ -167,8 +172,8 @@ describe("createCheckoutSession", () => {
   it("should refuse a prof buying their own course", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "prof-1", email: "prof@test.com", role: "PROF" },
-    } as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    } as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
 
     const result = await createCheckoutSession("course-1")
@@ -178,8 +183,8 @@ describe("createCheckoutSession", () => {
   })
 
   it("should refuse a free course", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue({ ...mockCourse, price: 0 } as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue({ ...mockCourse, price: 0 } as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
 
     const result = await createCheckoutSession("course-1")

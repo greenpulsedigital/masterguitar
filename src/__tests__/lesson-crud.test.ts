@@ -31,6 +31,13 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type ModuleResult = Awaited<ReturnType<typeof prisma.module.findUnique>>
+type LessonResult = Awaited<ReturnType<typeof prisma.lesson.findUnique>>
+type LessonCreateResult = Awaited<ReturnType<typeof prisma.lesson.create>>
+type LessonUpdateResult = Awaited<ReturnType<typeof prisma.lesson.update>>
+type LessonDeleteResult = Awaited<ReturnType<typeof prisma.lesson.delete>>
+
 describe("Lesson CRUD operations", () => {
   const mockProfSession = {
     user: {
@@ -75,7 +82,7 @@ describe("Lesson CRUD operations", () => {
 
   describe("createLesson", () => {
     it("should create lesson with correct order", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingLessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -85,7 +92,7 @@ describe("Lesson CRUD operations", () => {
       vi.mocked(prisma.module.findUnique).mockResolvedValue({
         ...mockModule,
         lessons: existingLessons,
-      } as any)
+      } as unknown as ModuleResult)
 
       const newLesson = {
         id: "les-3",
@@ -96,7 +103,7 @@ describe("Lesson CRUD operations", () => {
         moduleId: "mod-1",
       }
 
-      vi.mocked(prisma.lesson.create).mockResolvedValue(newLesson as any)
+      vi.mocked(prisma.lesson.create).mockResolvedValue(newLesson as unknown as LessonCreateResult)
 
       const formData = new FormData()
       formData.set("moduleId", "mod-1")
@@ -118,8 +125,8 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("moduleId", "mod-1")
@@ -133,7 +140,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require PROF role", async () => {
-      vi.mocked(auth).mockResolvedValue(mockStudentSession as any)
+      vi.mocked(auth).mockResolvedValue(mockStudentSession as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("moduleId", "mod-1")
@@ -147,13 +154,13 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       vi.mocked(prisma.module.findUnique).mockResolvedValue({
         ...mockModule,
         course: { ...mockCourse, profId: "different-prof-id" },
         lessons: [],
-      } as any)
+      } as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("moduleId", "mod-1")
@@ -171,7 +178,7 @@ describe("Lesson CRUD operations", () => {
 
   describe("updateLesson", () => {
     it("should update lesson fields", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingLesson = {
         id: "les-1",
@@ -183,11 +190,11 @@ describe("Lesson CRUD operations", () => {
         module: mockModule,
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as unknown as LessonResult)
       vi.mocked(prisma.lesson.update).mockResolvedValue({
         ...existingLesson,
         title: "New Title",
-      } as any)
+      } as unknown as LessonUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -210,8 +217,8 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -225,7 +232,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingLesson = {
         id: "les-1",
@@ -240,7 +247,7 @@ describe("Lesson CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as unknown as LessonResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -258,7 +265,7 @@ describe("Lesson CRUD operations", () => {
 
   describe("deleteLesson", () => {
     it("should delete lesson when user is owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingLesson = {
         id: "les-1",
@@ -270,8 +277,8 @@ describe("Lesson CRUD operations", () => {
         module: mockModule,
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as any)
-      vi.mocked(prisma.lesson.delete).mockResolvedValue(existingLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.delete).mockResolvedValue(existingLesson as unknown as LessonDeleteResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -286,8 +293,8 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -300,7 +307,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingLesson = {
         id: "les-1",
@@ -315,7 +322,7 @@ describe("Lesson CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(existingLesson as unknown as LessonResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -332,7 +339,7 @@ describe("Lesson CRUD operations", () => {
 
   describe("reorderLesson", () => {
     it("should swap order when moving up", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const lessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -345,8 +352,8 @@ describe("Lesson CRUD operations", () => {
         module: { ...mockModule, lessons },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as any)
-      vi.mocked(prisma.lesson.update).mockResolvedValue(currentLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.update).mockResolvedValue(currentLesson as unknown as LessonUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "les-2")
@@ -367,7 +374,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should swap order when moving down", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const lessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -380,8 +387,8 @@ describe("Lesson CRUD operations", () => {
         module: { ...mockModule, lessons },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as any)
-      vi.mocked(prisma.lesson.update).mockResolvedValue(currentLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.update).mockResolvedValue(currentLesson as unknown as LessonUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "les-2")
@@ -402,7 +409,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should not move beyond first position", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const lessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -414,7 +421,7 @@ describe("Lesson CRUD operations", () => {
         module: { ...mockModule, lessons },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as unknown as LessonResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -430,7 +437,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should not move beyond last position", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const lessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -442,7 +449,7 @@ describe("Lesson CRUD operations", () => {
         module: { ...mockModule, lessons },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as unknown as LessonResult)
 
       const formData = new FormData()
       formData.set("id", "les-2")
@@ -458,8 +465,8 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "les-1")
@@ -473,7 +480,7 @@ describe("Lesson CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const lessons = [
         { id: "les-1", title: "Lesson 1", order: 1, moduleId: "mod-1" },
@@ -489,7 +496,7 @@ describe("Lesson CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(currentLesson as unknown as LessonResult)
 
       const formData = new FormData()
       formData.set("id", "les-1")

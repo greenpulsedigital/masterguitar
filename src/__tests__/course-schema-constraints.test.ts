@@ -11,12 +11,16 @@ vi.mock("@/lib/prisma", () => ({
 
 import { prisma } from "@/lib/prisma"
 
+type CourseCreateResult = Awaited<ReturnType<typeof prisma.course.create>>
+type PrismaConstraintError = Error & { code: string; meta: { target: string[] } }
+
 describe("Course slug uniqueness constraint", () => {
   it("should reject duplicate slug globally", async () => {
     // Simulate unique constraint violation error (SQLite error code for unique constraint)
     const uniqueConstraintError = new Error("Unique constraint failed on the fields: (`slug`)")
-    ;(uniqueConstraintError as any).code = "P2002"
-    ;(uniqueConstraintError as any).meta = { target: ["slug"] }
+    const constraintError = uniqueConstraintError as unknown as PrismaConstraintError
+    constraintError.code = "P2002"
+    constraintError.meta = { target: ["slug"] }
 
     // First call succeeds
     vi.mocked(prisma.course.create).mockResolvedValueOnce({
@@ -30,7 +34,7 @@ describe("Course slug uniqueness constraint", () => {
       profId: "prof-1",
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any)
+    } as unknown as CourseCreateResult)
 
     // Second call with duplicate slug should fail
     vi.mocked(prisma.course.create).mockRejectedValueOnce(uniqueConstraintError)

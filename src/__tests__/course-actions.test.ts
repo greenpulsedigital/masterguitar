@@ -40,13 +40,13 @@ function form(fields: Record<string, string>) {
 describe("course actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(auth).mockResolvedValue(prof as any)
+    vi.mocked(auth).mockResolvedValue(prof as unknown as Awaited<ReturnType<typeof auth>>)
   })
 
   describe("createCourse", () => {
     it("lets the redirect propagate after a successful creation", async () => {
       vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as any)
+      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as unknown as Awaited<ReturnType<typeof prisma.course.create>>)
 
       await expect(
         createCourse(form({ title: "Débuter la guitare", price: "10" }))
@@ -55,9 +55,9 @@ describe("course actions", () => {
 
     it("appends a suffix when the slug already exists", async () => {
       vi.mocked(prisma.course.findUnique)
-        .mockResolvedValueOnce({ id: "other" } as any)
+        .mockResolvedValueOnce({ id: "other" } as unknown as Awaited<ReturnType<typeof prisma.course.findUnique>>)
         .mockResolvedValueOnce(null)
-      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as any)
+      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as unknown as Awaited<ReturnType<typeof prisma.course.create>>)
 
       await expect(
         createCourse(form({ title: "Guitare", price: "10" }))
@@ -72,7 +72,7 @@ describe("course actions", () => {
 
     it("falls back to a default slug when the title has no usable characters", async () => {
       vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as any)
+      vi.mocked(prisma.course.create).mockResolvedValue({ id: "c1" } as unknown as Awaited<ReturnType<typeof prisma.course.create>>)
 
       await expect(
         createCourse(form({ title: "!!!", price: "10" }))
@@ -99,14 +99,14 @@ describe("course actions", () => {
       vi.mocked(prisma.course.findUnique).mockResolvedValue({
         id: "c1",
         profId: "prof-1",
-      } as any)
-      vi.mocked(prisma.course.update).mockResolvedValue({} as any)
+      } as unknown as Awaited<ReturnType<typeof prisma.course.findUnique>>)
+      vi.mocked(prisma.course.update).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof prisma.course.update>>)
 
       await expect(
         updateCourse(form({ id: "c1", title: "Nouveau titre", price: "10" }))
       ).rejects.toThrow("NEXT_REDIRECT:/dashboard/courses")
 
-      const call = vi.mocked(prisma.course.update).mock.calls[0][0] as any
+      const call = vi.mocked(prisma.course.update).mock.calls[0][0] as { data: Record<string, unknown> }
       expect(call.data).not.toHaveProperty("slug")
     })
   })
@@ -116,7 +116,7 @@ describe("course actions", () => {
       vi.mocked(prisma.course.findUnique).mockResolvedValue({
         id: "c1",
         profId: "prof-1",
-      } as any)
+      } as unknown as Awaited<ReturnType<typeof prisma.course.findUnique>>)
     })
 
     it("refuses to delete a course that has purchases", async () => {
@@ -130,7 +130,7 @@ describe("course actions", () => {
 
     it("lets the redirect propagate after a successful deletion", async () => {
       vi.mocked(prisma.purchase.count).mockResolvedValue(0)
-      vi.mocked(prisma.course.delete).mockResolvedValue({} as any)
+      vi.mocked(prisma.course.delete).mockResolvedValue({} as unknown as Awaited<ReturnType<typeof prisma.course.delete>>)
 
       await expect(deleteCourse(form({ id: "c1" }))).rejects.toThrow(
         "NEXT_REDIRECT:/dashboard/courses"

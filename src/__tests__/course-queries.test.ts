@@ -12,6 +12,16 @@ vi.mock("@/lib/prisma", () => ({
 
 import { prisma } from "@/lib/prisma"
 
+type CourseQueryResult = Awaited<ReturnType<typeof prisma.course.findFirst>>
+type CourseQueryArgs = {
+  include?: unknown
+  select: {
+    [key: string]: unknown
+    modules: { select: Record<string, unknown> }
+    prof: { select: { name: boolean } }
+  }
+}
+
 describe("getCourseBySlug", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -48,7 +58,7 @@ describe("getCourseBySlug", () => {
       ],
     }
 
-    vi.mocked(prisma.course.findFirst).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(prisma.course.findFirst).mockResolvedValueOnce(mockCourse as unknown as CourseQueryResult)
 
     const result = await getCourseBySlug("guitare-debutant")
 
@@ -85,7 +95,7 @@ describe("getCourseBySlug", () => {
 
     await getCourseBySlug("any-course")
 
-    const args = vi.mocked(prisma.course.findFirst).mock.calls.at(-1)![0] as any
+    const args = vi.mocked(prisma.course.findFirst).mock.calls.at(-1)![0] as CourseQueryArgs
     expect(args.include).toBeUndefined()
     expect(args.select).not.toHaveProperty("profId")
     expect(args.select.modules.select).not.toHaveProperty("lessons")
@@ -138,7 +148,7 @@ describe("getCourseBySlug", () => {
       ],
     }
 
-    vi.mocked(prisma.course.findFirst).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(prisma.course.findFirst).mockResolvedValueOnce(mockCourse as unknown as CourseQueryResult)
 
     await getCourseBySlug("test-course")
 

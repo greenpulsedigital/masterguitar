@@ -31,6 +31,13 @@ import {
   reorderLesson,
 } from "@/app/(dashboard)/dashboard/courses/actions"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type ModuleResult = Awaited<ReturnType<typeof prisma.module.findUnique>>
+type LessonResult = Awaited<ReturnType<typeof prisma.lesson.findUnique>>
+type LessonCreateResult = Awaited<ReturnType<typeof prisma.lesson.create>>
+type LessonUpdateResult = Awaited<ReturnType<typeof prisma.lesson.update>>
+type LessonDeleteResult = Awaited<ReturnType<typeof prisma.lesson.delete>>
+
 const prof = { user: { id: "prof-1", role: "PROF" } }
 
 function form(fields: Record<string, string>) {
@@ -55,7 +62,7 @@ const ownedLesson = {
 describe("lesson actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(auth).mockResolvedValue(prof as any)
+    vi.mocked(auth).mockResolvedValue(prof as unknown as AuthResult)
   })
 
   describe("redirect after success", () => {
@@ -65,8 +72,8 @@ describe("lesson actions", () => {
         courseId: "c1",
         course: { profId: "prof-1" },
         lessons: [],
-      } as any)
-      vi.mocked(prisma.lesson.create).mockResolvedValue({} as any)
+      } as unknown as ModuleResult)
+      vi.mocked(prisma.lesson.create).mockResolvedValue({} as unknown as LessonCreateResult)
 
       await expect(
         createLesson(form({ moduleId: "m1", title: "Intro" }))
@@ -74,8 +81,8 @@ describe("lesson actions", () => {
     })
 
     it("updateLesson", async () => {
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as any)
-      vi.mocked(prisma.lesson.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.update).mockResolvedValue({} as unknown as LessonUpdateResult)
 
       await expect(
         updateLesson(form({ id: "l1", title: "Titre" }))
@@ -83,8 +90,8 @@ describe("lesson actions", () => {
     })
 
     it("deleteLesson", async () => {
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as any)
-      vi.mocked(prisma.lesson.delete).mockResolvedValue({} as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.delete).mockResolvedValue({} as unknown as LessonDeleteResult)
 
       await expect(deleteLesson(form({ id: "l1" }))).rejects.toThrow(
         "NEXT_REDIRECT:/dashboard/courses/c1"
@@ -92,8 +99,8 @@ describe("lesson actions", () => {
     })
 
     it("reorderLesson", async () => {
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as any)
-      vi.mocked(prisma.lesson.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.update).mockResolvedValue({} as unknown as LessonUpdateResult)
 
       await expect(
         reorderLesson(form({ id: "l1", direction: "down" }))
@@ -119,8 +126,8 @@ describe("lesson actions", () => {
         courseId: "c1",
         course: { profId: "prof-1" },
         lessons: [],
-      } as any)
-      vi.mocked(prisma.lesson.create).mockResolvedValue({} as any)
+      } as unknown as ModuleResult)
+      vi.mocked(prisma.lesson.create).mockResolvedValue({} as unknown as LessonCreateResult)
 
       await expect(
         createLesson(
@@ -139,8 +146,8 @@ describe("lesson actions", () => {
     })
 
     it("swaps both orders in a single transaction", async () => {
-      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as any)
-      vi.mocked(prisma.lesson.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.lesson.findUnique).mockResolvedValue(ownedLesson as unknown as LessonResult)
+      vi.mocked(prisma.lesson.update).mockResolvedValue({} as unknown as LessonUpdateResult)
 
       await expect(
         reorderLesson(form({ id: "l1", direction: "down" }))

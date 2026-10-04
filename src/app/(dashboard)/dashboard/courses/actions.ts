@@ -57,7 +57,7 @@ export async function createCourse(formData: FormData) {
         profId: session.user.id,
       },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la création du cours" }
   }
 
@@ -116,7 +116,7 @@ export async function updateCourse(formData: FormData) {
         thumbnailUrl: thumbnailUrl || null,
       },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la mise à jour du cours" }
   }
 
@@ -160,7 +160,7 @@ export async function deleteCourse(formData: FormData) {
     await prisma.course.delete({
       where: { id },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la suppression du cours" }
   }
 
@@ -206,7 +206,7 @@ export async function createModule(formData: FormData) {
         courseId,
       },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la création du module" }
   }
 
@@ -228,16 +228,16 @@ export async function updateModule(formData: FormData) {
   }
 
   // Check ownership
-  const module = await prisma.module.findUnique({
+  const courseModule = await prisma.module.findUnique({
     where: { id },
     include: { course: true },
   })
 
-  if (!module) {
+  if (!courseModule) {
     return { error: "Module introuvable" }
   }
 
-  if (module.course.profId !== session.user.id) {
+  if (courseModule.course.profId !== session.user.id) {
     return { error: "Vous n'êtes pas autorisé à modifier ce module" }
   }
 
@@ -246,11 +246,11 @@ export async function updateModule(formData: FormData) {
       where: { id },
       data: { title },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la mise à jour du module" }
   }
 
-  redirect(`/dashboard/courses/${module.courseId}`)
+  redirect(`/dashboard/courses/${courseModule.courseId}`)
 }
 
 export async function deleteModule(formData: FormData) {
@@ -263,16 +263,16 @@ export async function deleteModule(formData: FormData) {
   const id = formData.get("id") as string
 
   // Check ownership
-  const module = await prisma.module.findUnique({
+  const courseModule = await prisma.module.findUnique({
     where: { id },
     include: { course: true },
   })
 
-  if (!module) {
+  if (!courseModule) {
     return { error: "Module introuvable" }
   }
 
-  if (module.course.profId !== session.user.id) {
+  if (courseModule.course.profId !== session.user.id) {
     return { error: "Vous n'êtes pas autorisé à supprimer ce module" }
   }
 
@@ -280,11 +280,11 @@ export async function deleteModule(formData: FormData) {
     await prisma.module.delete({
       where: { id },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la suppression du module" }
   }
 
-  redirect(`/dashboard/courses/${module.courseId}`)
+  redirect(`/dashboard/courses/${courseModule.courseId}`)
 }
 
 export async function reorderModule(formData: FormData) {
@@ -302,7 +302,7 @@ export async function reorderModule(formData: FormData) {
   }
 
   // Get module with course and all modules
-  const module = await prisma.module.findUnique({
+  const courseModule = await prisma.module.findUnique({
     where: { id },
     include: {
       course: {
@@ -315,15 +315,15 @@ export async function reorderModule(formData: FormData) {
     },
   })
 
-  if (!module) {
+  if (!courseModule) {
     return { error: "Module introuvable" }
   }
 
-  if (module.course.profId !== session.user.id) {
+  if (courseModule.course.profId !== session.user.id) {
     return { error: "Vous n'êtes pas autorisé à modifier ce module" }
   }
 
-  const modules = module.course.modules
+  const modules = courseModule.course.modules
   const currentIndex = modules.findIndex(m => m.id === id)
 
   // Check boundaries
@@ -343,19 +343,19 @@ export async function reorderModule(formData: FormData) {
   try {
     await prisma.$transaction([
       prisma.module.update({
-        where: { id: module.id },
+        where: { id: courseModule.id },
         data: { order: adjacentModule.order },
       }),
       prisma.module.update({
         where: { id: adjacentModule.id },
-        data: { order: module.order },
+        data: { order: courseModule.order },
       }),
     ])
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors du réordonnancement du module" }
   }
 
-  redirect(`/dashboard/courses/${module.courseId}`)
+  redirect(`/dashboard/courses/${courseModule.courseId}`)
 }
 
 // Lesson actions
@@ -425,7 +425,7 @@ export async function createLesson(formData: FormData) {
         moduleId,
       },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la création de la leçon" }
   }
 
@@ -478,7 +478,7 @@ export async function updateLesson(formData: FormData) {
         videoUrl: videoUrl || null,
       },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la mise à jour de la leçon" }
   }
 
@@ -512,7 +512,7 @@ export async function deleteLesson(formData: FormData) {
     await prisma.lesson.delete({
       where: { id },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors de la suppression de la leçon" }
   }
 
@@ -584,7 +584,7 @@ export async function reorderLesson(formData: FormData) {
         data: { order: lesson.order },
       }),
     ])
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors du réordonnancement de la leçon" }
   }
 
@@ -621,7 +621,7 @@ export async function toggleCourseStatus(formData: FormData) {
       where: { id },
       data: { status: newStatus },
     })
-  } catch (error) {
+  } catch {
     return { error: "Erreur lors du changement de statut du cours" }
   }
 

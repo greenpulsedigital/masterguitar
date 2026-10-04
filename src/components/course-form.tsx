@@ -83,7 +83,7 @@ export function CourseForm({ course, action }: CourseFormProps) {
           defaultValue={course?.thumbnailUrl || ""}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Collez l'URL d'une image hébergée
+          Collez l&apos;URL d&apos;une image hébergée
         </p>
       </div>
 

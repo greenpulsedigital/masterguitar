@@ -23,6 +23,10 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { updateModule, reorderModule } from "@/app/(dashboard)/dashboard/courses/actions"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type ModuleResult = Awaited<ReturnType<typeof prisma.module.findUnique>>
+type ModuleUpdateResult = Awaited<ReturnType<typeof prisma.module.update>>
+
 const prof = { user: { id: "prof-1", role: "PROF" } }
 
 function form(fields: Record<string, string>) {
@@ -47,13 +51,13 @@ const ownedModule = {
 describe("module actions", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(auth).mockResolvedValue(prof as any)
+    vi.mocked(auth).mockResolvedValue(prof as unknown as AuthResult)
   })
 
   describe("updateModule", () => {
     it("persists the trimmed title", async () => {
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as any)
-      vi.mocked(prisma.module.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.update).mockResolvedValue({} as unknown as ModuleUpdateResult)
 
       await expect(
         updateModule(form({ id: "m1", title: "  Introduction  " }))
@@ -82,8 +86,8 @@ describe("module actions", () => {
     })
 
     it("swaps both orders in a single transaction", async () => {
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as any)
-      vi.mocked(prisma.module.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.update).mockResolvedValue({} as unknown as ModuleUpdateResult)
 
       await expect(
         reorderModule(form({ id: "m1", direction: "down" }))
@@ -101,8 +105,8 @@ describe("module actions", () => {
     })
 
     it("returns an error when the transaction fails", async () => {
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as any)
-      vi.mocked(prisma.module.update).mockResolvedValue({} as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(ownedModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.update).mockResolvedValue({} as unknown as ModuleUpdateResult)
       vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("db"))
 
       const result = await reorderModule(form({ id: "m1", direction: "down" }))

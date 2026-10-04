@@ -31,6 +31,13 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+type ModuleResult = Awaited<ReturnType<typeof prisma.module.findUnique>>
+type ModuleCreateResult = Awaited<ReturnType<typeof prisma.module.create>>
+type ModuleUpdateResult = Awaited<ReturnType<typeof prisma.module.update>>
+type ModuleDeleteResult = Awaited<ReturnType<typeof prisma.module.delete>>
+
 describe("Module CRUD operations", () => {
   const mockProfSession = {
     user: {
@@ -67,7 +74,7 @@ describe("Module CRUD operations", () => {
 
   describe("createModule", () => {
     it("should create module with correct order", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingModules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -77,7 +84,7 @@ describe("Module CRUD operations", () => {
       vi.mocked(prisma.course.findUnique).mockResolvedValue({
         ...mockCourse,
         modules: existingModules,
-      } as any)
+      } as unknown as CourseResult)
 
       const newModule = {
         id: "mod-3",
@@ -86,7 +93,7 @@ describe("Module CRUD operations", () => {
         courseId: "course-1",
       }
 
-      vi.mocked(prisma.module.create).mockResolvedValue(newModule as any)
+      vi.mocked(prisma.module.create).mockResolvedValue(newModule as unknown as ModuleCreateResult)
 
       const formData = new FormData()
       formData.set("courseId", "course-1")
@@ -105,10 +112,10 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       // Mock course.findUnique to prevent null access error
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(null as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("courseId", "course-1")
@@ -121,7 +128,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require PROF role", async () => {
-      vi.mocked(auth).mockResolvedValue(mockStudentSession as any)
+      vi.mocked(auth).mockResolvedValue(mockStudentSession as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("courseId", "course-1")
@@ -134,13 +141,13 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       vi.mocked(prisma.course.findUnique).mockResolvedValue({
         ...mockCourse,
         profId: "different-prof-id",
         modules: [],
-      } as any)
+      } as unknown as CourseResult)
 
       const formData = new FormData()
       formData.set("courseId", "course-1")
@@ -157,7 +164,7 @@ describe("Module CRUD operations", () => {
 
   describe("updateModule", () => {
     it("should update module title", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingModule = {
         id: "mod-1",
@@ -167,11 +174,11 @@ describe("Module CRUD operations", () => {
         course: mockCourse,
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as unknown as ModuleResult)
       vi.mocked(prisma.module.update).mockResolvedValue({
         ...existingModule,
         title: "New Title",
-      } as any)
+      } as unknown as ModuleUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -188,10 +195,10 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       // Mock module.findUnique to prevent null access error
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(null as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -205,7 +212,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingModule = {
         id: "mod-1",
@@ -218,7 +225,7 @@ describe("Module CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -236,7 +243,7 @@ describe("Module CRUD operations", () => {
 
   describe("deleteModule", () => {
     it("should delete module when user is owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingModule = {
         id: "mod-1",
@@ -246,8 +253,8 @@ describe("Module CRUD operations", () => {
         course: mockCourse,
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as any)
-      vi.mocked(prisma.module.delete).mockResolvedValue(existingModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.delete).mockResolvedValue(existingModule as unknown as ModuleDeleteResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -262,10 +269,10 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       // Mock module.findUnique to prevent null access error
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(null as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -278,7 +285,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingModule = {
         id: "mod-1",
@@ -291,7 +298,7 @@ describe("Module CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(existingModule as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -308,7 +315,7 @@ describe("Module CRUD operations", () => {
 
   describe("reorderModule", () => {
     it("should swap order when moving up", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const modules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -321,8 +328,8 @@ describe("Module CRUD operations", () => {
         course: { ...mockCourse, modules },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as any)
-      vi.mocked(prisma.module.update).mockResolvedValue(currentModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.update).mockResolvedValue(currentModule as unknown as ModuleUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "mod-2")
@@ -344,7 +351,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should swap order when moving down", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const modules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -357,8 +364,8 @@ describe("Module CRUD operations", () => {
         course: { ...mockCourse, modules },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as any)
-      vi.mocked(prisma.module.update).mockResolvedValue(currentModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as unknown as ModuleResult)
+      vi.mocked(prisma.module.update).mockResolvedValue(currentModule as unknown as ModuleUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "mod-2")
@@ -380,7 +387,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should not move beyond first position", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const modules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -392,7 +399,7 @@ describe("Module CRUD operations", () => {
         course: { ...mockCourse, modules },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -408,7 +415,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should not move beyond last position", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const modules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -420,7 +427,7 @@ describe("Module CRUD operations", () => {
         course: { ...mockCourse, modules },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("id", "mod-2")
@@ -436,10 +443,10 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require authentication", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       // Mock module.findUnique to prevent null access error
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(null as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
       formData.set("id", "mod-1")
@@ -453,7 +460,7 @@ describe("Module CRUD operations", () => {
     })
 
     it("should require ownership", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const modules = [
         { id: "mod-1", title: "Module 1", order: 1, courseId: "course-1" },
@@ -469,7 +476,7 @@ describe("Module CRUD operations", () => {
         },
       }
 
-      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as any)
+      vi.mocked(prisma.module.findUnique).mockResolvedValue(currentModule as unknown as ModuleResult)
 
       const formData = new FormData()
       formData.set("id", "mod-1")

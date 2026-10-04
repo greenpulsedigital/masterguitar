@@ -45,6 +45,15 @@ import { createCheckoutSession } from "@/app/checkout/actions"
 import { POST as webhookHandler } from "@/app/api/webhooks/stripe/route"
 import { NextRequest } from "next/server"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+type UserResult = Awaited<ReturnType<typeof prisma.user.findUnique>>
+type PurchaseResult = Awaited<ReturnType<typeof prisma.purchase.findFirst>>
+type PurchaseFindUniqueResult = Awaited<ReturnType<typeof prisma.purchase.findUnique>>
+type PurchaseCreateResult = Awaited<ReturnType<typeof prisma.purchase.create>>
+type CheckoutCreateResult = Awaited<ReturnType<typeof stripe.checkout.sessions.create>>
+type StripeEvent = ReturnType<typeof stripe.webhooks.constructEvent>
+
 describe("Checkout Integration Flow", () => {
   const mockUser = {
     user: {
@@ -70,14 +79,14 @@ describe("Checkout Integration Flow", () => {
 
   it("should complete full checkout flow from session creation to purchase record", async () => {
     // Step 1: Create checkout session
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
     vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
       id: "cs_test_123",
       url: "https://checkout.stripe.com/session_123",
       payment_intent: "pi_test_123",
-    } as any)
+    } as unknown as CheckoutCreateResult)
 
     const sessionResult = await createCheckoutSession("course-1")
 
@@ -112,8 +121,8 @@ describe("Checkout Integration Flow", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(webhookEvent as any)
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(webhookEvent as unknown as StripeEvent)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as unknown as UserResult)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.purchase.create).mockResolvedValue({
       id: "purchase-1",
@@ -123,7 +132,7 @@ describe("Checkout Integration Flow", () => {
       userId: "user-1",
       courseId: "course-1",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseCreateResult)
 
     const request = new NextRequest("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -149,8 +158,8 @@ describe("Checkout Integration Flow", () => {
 
   it("should prevent duplicate purchases throughout the flow", async () => {
     // User tries to checkout for a course they already own
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue({
       id: "purchase-1",
       userId: "user-1",
@@ -159,7 +168,7 @@ describe("Checkout Integration Flow", () => {
       stripePaymentId: "pi_existing",
       stripeSessionId: "cs_existing",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -186,7 +195,7 @@ describe("Checkout Integration Flow", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(webhookEvent as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(webhookEvent as unknown as StripeEvent)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue({
       id: "purchase-1",
       amount: 5000,
@@ -195,7 +204,7 @@ describe("Checkout Integration Flow", () => {
       userId: "user-1",
       courseId: "course-1",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseFindUniqueResult)
 
     const request = new NextRequest("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -212,11 +221,11 @@ describe("Checkout Integration Flow", () => {
   })
 
   it("should enforce course must be PUBLISHED for checkout", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(prisma.course.findUnique).mockResolvedValue({
       ...mockCourse,
       status: "DRAFT" as const,
-    } as any)
+    } as unknown as CourseResult)
 
     const result = await createCheckoutSession("course-1")
 
@@ -227,7 +236,7 @@ describe("Checkout Integration Flow", () => {
   })
 
   it("should require authentication for checkout", async () => {
-    vi.mocked(auth).mockResolvedValue(null as any)
+    vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
     const result = await createCheckoutSession("course-1")
 

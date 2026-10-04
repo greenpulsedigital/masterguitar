@@ -129,7 +129,7 @@ function DeleteCourseDialog({
         <DialogHeader>
           <DialogTitle>Supprimer le cours</DialogTitle>
           <DialogDescription>
-            Êtes-vous sûr de vouloir supprimer le cours "{courseTitle}" ?
+            Êtes-vous sûr de vouloir supprimer le cours &quot;{courseTitle}&quot; ?
             Cette action est irréversible.
           </DialogDescription>
         </DialogHeader>

@@ -28,7 +28,7 @@ export function CheckoutButton({ courseId }: CheckoutButtonProps) {
       if (result.url) {
         window.location.href = result.url
       }
-    } catch (err) {
+    } catch {
       setError("Une erreur est survenue")
       setIsLoading(false)
     }

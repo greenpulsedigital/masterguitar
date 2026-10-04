@@ -68,7 +68,7 @@ export default function LoginPage() {
         <CardFooter className="flex justify-center gap-1 text-sm">
           <span className="text-muted-foreground">Pas encore de compte ?</span>
           <Link href="/signup" className="text-primary hover:underline">
-            S'inscrire
+            S&apos;inscrire
           </Link>
         </CardFooter>
       </Card>
