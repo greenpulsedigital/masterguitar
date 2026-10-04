@@ -22,8 +22,8 @@ describe("generateSlug", () => {
     expect(generateSlug("hello   world")).toBe("hello-world")
   })
 
-  it("should handle French accents by removing them", () => {
-    expect(generateSlug("Débuter la guitare électrique")).toBe("dbuter-la-guitare-lectrique")
+  it("should strip French accents", () => {
+    expect(generateSlug("Débuter la guitare électrique")).toBe("debuter-la-guitare-electrique")
   })
 
   it("should handle empty string", () => {
