@@ -10,6 +10,9 @@ vi.mock("@/lib/prisma", () => ({
     course: {
       findUnique: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
     purchase: {
       findFirst: vi.fn(),
       findUnique: vi.fn(),
@@ -95,6 +98,8 @@ describe("Checkout Integration Flow", () => {
         object: {
           id: "cs_test_123",
           payment_intent: "pi_test_123",
+          payment_status: "paid",
+          currency: "eur",
           amount_total: 5000,
           metadata: {
             courseId: "course-1",
@@ -105,6 +110,7 @@ describe("Checkout Integration Flow", () => {
     }
 
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(webhookEvent as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as any)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.purchase.create).mockResolvedValue({
       id: "purchase-1",
