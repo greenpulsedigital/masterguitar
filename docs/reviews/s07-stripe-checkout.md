@@ -1,84 +1,69 @@
 # Review — Story s07-stripe-checkout
 
 > Fresh-context review. Each issue classified: critical / major / minor.
-> Re-review of `main` at `7d5458f` (2026-10-04), after the fixes merged in PR #12.
-> The first review (diff `main...feature/s07-stripe-checkout`, verdict "Ship allowed: yes") is superseded by this one.
+> Third review: `main` at `c181313` (2026-10-04), after PR #12 (webhook hardening), #14 (design), #15 (design gaps) and #18 (double-payment alert).
+> It supersedes the review of `7d5458f` (verdict "major / Ship allowed: no") and the first review ("minor / Ship allowed: yes").
 
 ## Plan compliance
-- [x] The code does what the plan specifies, nothing more
-
-The 8 tasks from the plan are completed (Purchase model + migration, Stripe client `src/lib/stripe.ts`, `getCourseById`, checkout action, checkout page, webhook, success page, integration tests).
-
-PR #12 added behaviour beyond the original plan, all of it hardening:
-- `@@unique([userId, courseId])` on `Purchase` + migration `20261004120000_s07_purchase_unique_user_course`
-- Refusal of free courses and of a prof buying their own course (`src/app/checkout/actions.ts:29-36`, `src/app/checkout/[courseId]/page.tsx:28-35`)
-- `src/lib/app-url.ts`: `NEXT_PUBLIC_APP_URL` required in production
+- [x] The code does what the plan specifies, nothing more — the 8 planned tasks are done, plus the hardening added by PR #12 and #18.
+- [ ] Acceptance criterion "Le prof reçoit 100% du montant (moins frais Stripe)" is **not met** and is now unchecked in the plan. On 2026-10-04 ADR 004 decided **one Stripe account per prof, no Stripe Connect**; the code still uses a single platform key (`src/lib/stripe.ts:3-8`, `src/app/checkout/actions.ts:50-72`), so the money lands on the platform account. See finding 1.
 
 ## Anti-hallucination
-- [x] No invented API/function/import (each one opened and verified)
-
-Verified against the current code:
-- `stripe.checkout.sessions.create` / `retrieve`, `stripe.webhooks.constructEvent`, `Stripe.Checkout.Session`
-- Event `checkout.session.async_payment_succeeded` (handled in `src/app/api/webhooks/stripe/route.ts:26-29`)
-- Stripe API version `2026-07-29.dahlia` (`src/lib/stripe.ts:8`)
-
-- [x] No plausible-but-wrong value or logic — see findings for the residual risks below
+- [x] No invented API/function/import (Stripe SDK calls, `checkout.session.async_payment_succeeded`, Prisma `upsert` on `PaymentIssue`, API version `2026-07-29.dahlia` at `src/lib/stripe.ts:8`).
+- [x] No plausible-but-wrong logic found in the payment path itself.
 
 ## Rules compliance
-- [x] Repo conventions followed (AGENTS.md): Server Components by default, `"use client"` only for `CheckoutButton`, Server Action for the mutation, `@/` imports, `params`/`searchParams` awaited as Promises.
-- [x] No accepted ADR contradicted — with one open point: ADR 004 still leaves undecided whether each prof has their own Stripe account or the platform has a single account that reverses to profs (see finding 3).
-- [ ] Design: **not satisfied.** The story has UI (`src/app/checkout/[courseId]/page.tsx`, `src/app/checkout/success/page.tsx`) but there is no `docs/designs/s07-stripe-checkout.md` nor mockup, while AGENTS.md requires a design file for stories with UI (see s06, which has both `.md` and `.html`). The first review called this "acceptable"; it is a pipeline gap. Components and tokens used are all from the existing design system.
+- [x] Repo conventions followed (AGENTS.md).
+- [x] ADR 004 is now decided on the payout model (one Stripe account per prof). The **code contradicts it** until the dedicated story is delivered; this is recorded as finding 1, not as an ADR violation by the original implementation (the ADR was open when s07 was written).
+- [x] Design: `docs/designs/s07-stripe-checkout.md` and `.html` exist (PR #14). The gaps listed there were fixed in PR #15 (`h-11` buttons, `role="alert"`, `aria-busy`, `formatPrice`, course title on the pending page). Remaining known gaps, all outside this story's primitives: `CardTitle` is a `div`, `Button size="lg"` is 36 px in the shared primitive, `already_purchased=true` does not know the course.
 
 ## Tests
-- [x] Test suite run by the reviewer, passing: `npx vitest run` on `main` at `7d5458f` → **43 files, 252 tests passed** (the "175 tests" of the first review is outdated).
-- [x] `npx tsc --noEmit` passes; ESLint is clean on the checkout files except a pre-existing unused-variable warning in `src/app/checkout/[courseId]/checkout-button.tsx:31`.
-- [x] Assertions pin the acceptance criteria:
-  - Session creation with correct metadata, authentication required, `PUBLISHED` required, duplicate purchase refused, prof cannot buy own course, free course refused
-  - Webhook: unpaid session ignored, delayed payment (`async_payment_succeeded`) creates the purchase, `payment_intent` as string / object / null, zero amount, wrong currency, unknown course, unknown user, replay (`findUnique`) and concurrent replay (`P2002`) both answered 200, raw body + signature + secret forwarded to `constructEvent`
-  - Success page: paid / unpaid session, session of another user, unauthenticated user
-- [ ] Gap: no test for a request **without** the `stripe-signature` header, although `route.ts:8-12` handles it (400).
-- Limit: the Prisma client is mocked everywhere, so the real unique constraints and the migration are not exercised by tests. The migration was checked with `prisma migrate diff` (no difference with the schema), not applied to a database in this review.
+- [x] Run by the reviewer on `main` at `c181313`: `npx vitest run` → **43 files, 256 tests passed**. `npx tsc --noEmit` clean.
+- [x] ESLint on `src/app/checkout`, `src/app/api`, `src/lib`: no error in the s07 code; one warning (unused `err`, `src/app/checkout/[courseId]/checkout-button.tsx:31`) and one pre-existing error in `src/lib/auth.ts:51` (`no-explicit-any`, from s02). The tests contain many `as any` casts that ESLint flags too.
+- [x] Assertions pin the acceptance criteria and the hardening: unpaid session ignored, delayed payment, `payment_intent` string/object/null, amount, currency, unknown course/user, replay, concurrent replay (`P2002` with an existing purchase for the session → 200, no alert), real double payment (`P2002` without purchase → `PaymentIssue` upsert + `[PAYMENT_ALERT]` + 200), alert write failure (500), no automatic refund, raw body + signature + secret forwarded to `constructEvent`, success page (paid / unpaid / other user / unauthenticated), prof buying own course, free course.
+- [ ] Gaps: no test for a request **without** the `stripe-signature` header (`route.ts:8-12`); no test for a `P2002` caused by `stripePaymentId` rather than `(userId, courseId)`; the Prisma client is mocked everywhere, so the unique constraints and migrations are never exercised against a real database, and concurrent deliveries are only simulated sequentially.
 
 ## Regressions
-- [x] No impact on existing code paths. Existing checkout tests were updated for the new webhook rules (`payment_status`, `currency`, user/course lookups); the rest of the suite is unchanged.
+- [x] No impact on existing code paths. Public sales page and lesson data are untouched; `PaymentIssue` has no relation to existing models.
 
-## Corrections of the first review verified in the code
+## Status of the findings of the previous review
 
-| Previous finding / risk | Status | Where |
+| Previous finding | Status | Where |
 |---|---|---|
-| `payment_intent as string` could fail on object/null | **Fixed** | `route.ts:56-64` (string, expanded object, null → 400) |
-| Webhook granted access without checking payment | **Fixed** | `route.ts:33-36` requires `payment_status === "paid"`; `async_payment_succeeded` handled |
-| No check on currency / amount / course / user | **Fixed** (amount only partially, see finding 2) | `route.ts:46-73` |
-| Double purchase (race) possible | **Fixed** | `schema.prisma:87`, migration, `P2002` handled at `route.ts:99-105` |
-| Prof could buy own course; free course reached Stripe | **Fixed** | `actions.ts:29-36`, `[courseId]/page.tsx:28-35` |
-| `localhost` fallback for success/cancel URLs in production | **Fixed** | `src/lib/app-url.ts` |
-| Success page showed "paid" for any `session_id` | **Fixed** | `success/page.tsx:39-60`: login required, session must belong to the user, unpaid shows "Paiement en attente" |
-| `redirect()` inside `try/catch` on the success page | **Fixed** | `success/page.tsx:44-54` |
+| Double payment answered 200 and only logged | **Fixed** (PR #18): `PaymentIssue` upsert (idempotent on `stripeSessionId`), `[PAYMENT_ALERT]` log, 500 if the write fails, no automatic refund | `src/app/api/webhooks/stripe/route.ts:96-133`, `prisma/schema.prisma` (`PaymentIssue`) |
+| Paid amount not compared with the course price | **Open, deliberate**: only `> 0` and currency `eur` are checked | `route.ts:46-54` |
+| "Prof receives 100%" not demonstrated | **Open**: decided (one account per prof), not implemented | finding 1 |
+| Success page does not check that the `Purchase` exists | **Open** | `src/app/checkout/success/page.tsx:60-90` |
+| `already_purchased=true` reachable without authentication | **Open** (generic message, no data) | `success/page.tsx:16-30` |
+| Refunds not reflected in the database | **Open**, accepted by ADR 004 for the MVP | `docs/decisions/004-payment-flow.md` |
+| No test without `stripe-signature` | **Open** | `src/__tests__/stripe-webhook.test.ts` |
+| Design file missing | **Fixed** (PR #14, gaps PR #15) | `docs/designs/s07-stripe-checkout.md` |
+| Deployment prerequisites | **Open** (see finding 3) | migrations `20261004120000_*`, `20261004140000_*` |
 
 ## Findings
 
 | Severity | File | Issue |
 |----------|------|-------|
-| **major** | `src/app/api/webhooks/stripe/route.ts:99-105` | A `P2002` is answered 200 and only logged. If a second payment for an already-owned course goes through (concurrent checkouts, or an old session paid late), Stripe has captured the money, no access is created, and nothing alerts anyone: the refund relies on someone reading the logs. Needs an alert/record (e.g. a flagged table or a monitored log) or an automatic refund. |
-| **major** | `src/app/api/webhooks/stripe/route.ts:46-49, 66-69` | The paid amount is only checked to be `> 0`; it is not compared with the course price. Deliberate: the session is created server-side from the database price and signed by Stripe, and comparing with the *current* price would reject legitimate payments if the prof changes the price between session creation and payment. The consequence is that a price change mid-checkout is accepted silently. Acceptable if documented; a stricter option is to store the expected amount in the session metadata and compare with that. |
-| **major** | `src/lib/stripe.ts:6-9`, `src/app/checkout/actions.ts:52-75`, `docs/plans/s07-stripe-checkout.md:17` | The acceptance criterion "the prof receives 100% (minus Stripe fees)" is **not demonstrated by the code**. Payments go to the single platform Stripe account (global `STRIPE_SECRET_KEY`); there is no Stripe Connect, no per-prof account, no transfer. ADR 004 (lines 20, 41, 45) rules out Connect and leaves open whether each prof uses their own Stripe account or the platform reverses payouts. The first review marked this criterion as met; it depends on an undecided product/legal point. |
-| minor | `src/app/checkout/success/page.tsx:60-90` | The page confirms the Stripe payment but does not check that the `Purchase` row exists yet. It can say "vous avez maintenant accès" while the webhook is late or failed. |
-| minor | `src/app/checkout/success/page.tsx:17-31` | The `already_purchased=true` branch is reachable without authentication. It leaks no data, but the page is not fully authenticated as the fix suggests. |
-| minor | `docs/decisions/004-payment-flow.md:48` | Refunds are manual in the Stripe dashboard and are not reflected in the database: a refunded `Purchase` keeps its access. Consistent with the ADR for the MVP, but must be known. |
-| minor | `src/__tests__/stripe-webhook.test.ts` | No test for the missing `stripe-signature` header (see Tests). |
-| minor | `docs/designs/s07-stripe-checkout.md` | Missing design file for a story with UI (see Rules compliance). |
-| minor | Deployment | Not code, but required for the webhook to work: subscribe the Stripe endpoint to `checkout.session.async_payment_succeeded`, set `NEXT_PUBLIC_APP_URL` in production, run `prisma migrate deploy` (fails if `(userId, courseId)` duplicates already exist). |
+| **major** | `src/lib/stripe.ts:3-8`, `src/app/checkout/actions.ts:50-72`, `src/app/api/webhooks/stripe/route.ts` | **Per-prof Stripe account decided but not implemented.** Checkout sessions are created with the single platform key (`STRIPE_SECRET_KEY`) and the webhook verifies a single `STRIPE_WEBHOOK_SECRET`; nothing stores a Stripe account or key per prof. Today the platform collects the money, which is what ADR 004 now rules out and what the PRD's "0% commission, the prof keeps 100%" promise forbids. Needs a dedicated story (see Verdict). |
+| **major** | Deployment (`prisma/migrations/20261004120000_s07_purchase_unique_user_course`, `20261004140000_s07_payment_issue`) | Both migrations are not applied anywhere yet (`prisma migrate status` on the local database confirms it). Before `prisma migrate deploy`, check for existing `(userId, courseId)` duplicates, which would make the unique index fail. The Stripe endpoint must also be subscribed to `checkout.session.async_payment_succeeded`, and `NEXT_PUBLIC_APP_URL` set in production. |
+| minor | `docs/decisions/004-payment-flow.md`, `prisma/schema.prisma` (`PaymentIssue`) | Nothing moves a `PaymentIssue` from `OPEN` to `RESOLVED` (the `upsert` deliberately keeps the existing status with `update: {}`), and no screen lists them. The workflow is manual (query the table, refund in the Stripe dashboard, update the row by hand), but the exact steps are not written down. |
+| minor | `src/app/api/webhooks/stripe/route.ts:96-119` | A `P2002` is classified as `DUPLICATE_PURCHASE` without looking at which constraint failed (`error.meta.target`). A `P2002` on `stripePaymentId` would be recorded the same way. Unlikely in practice (two sessions do not share a `payment_intent`), but untested. |
+| minor | `prisma/schema.prisma` (`PaymentIssue`) | Only a unique index on `stripeSessionId`; no index on `userId`, `courseId`, `status` or `createdAt`, and no relations. Fine for a few rows, awkward for operations later. |
+| minor | `src/app/api/webhooks/stripe/route.ts:122-147` | The alert log carries session, payment intent, user, course and amount identifiers: acceptable, but subject to your log retention/access policy. |
+| minor | `src/app/api/webhooks/stripe/route.ts:46-54` | The paid amount is not compared with the course price. Deliberate: the session is built server-side from the database price and signed by Stripe, and comparing with the *current* price would reject legitimate payments after a price change. Documented, not a defect. |
+| minor | `src/app/checkout/success/page.tsx:60-90` | The confirmation does not check that the `Purchase` exists yet; it can say "accès" while the webhook is late. |
+| minor | `src/app/checkout/success/page.tsx:16-31` | `already_purchased=true` is reachable without authentication (no data leaked). |
+| minor | `src/__tests__/stripe-webhook.test.ts` | Missing tests listed under "Tests". |
 
 ## Verdict
 
-The security and idempotency problems of the first version are fixed and covered by tests: access is granted only after a confirmed payment, replays and double purchases are handled, and the success page no longer shows a misleading confirmation.
+The payment path itself is in good shape: access is granted only for a confirmed payment, replays and real double payments are told apart and the latter are recorded and alerted, the success page no longer misleads, the design exists and the code follows it. 256 tests, `tsc` and the build pass.
 
-Shipping is still blocked by items that are decisions or safeguards rather than regressions:
-1. the "prof receives 100%" criterion depends on an open decision in ADR 004 (own Stripe account per prof vs. platform account with payouts);
-2. a double payment ends in a silent 200 with no alert or refund path;
-3. the design file required by AGENTS.md for a story with UI is missing.
+Shipping stays blocked because of what the payment is *for*, not how it is processed:
+1. **Per-prof Stripe accounts must be implemented.** This is a new story, not a patch to s07. It needs to settle: encrypted storage of each prof's keys (never sent to the client) and verification at entry; choosing the account at checkout from the course's `profId`; one webhook secret per prof and an endpoint that identifies the prof before checking the signature; what happens while a prof has not configured Stripe (the course cannot be bought); and subscriptions, which ADR 004 also plans.
+2. **Deployment prerequisites** (finding 2) must be done and checked.
 
-Moving to `Ship allowed: yes` requires: the payout model decided and written in ADR 004 (or the criterion removed from the plan), an alert or refund path for the `P2002` case, and the design file (or an explicit waiver recorded in the plan).
+An interim option, if you need to ship before that story: keep the platform account, but then the "0% commission / prof keeps 100%" promise is broken and payouts must be handled outside the application — this contradicts ADR 004 and is not recommended.
 
 Max severity: major
 Ship allowed: no

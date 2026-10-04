@@ -14,7 +14,7 @@ Branch: `feature/s07-stripe-checkout`
 - [x] Le paiement réussi crée un accès pour l'élève
 - [x] Le paiement réussi redirige vers une page de confirmation
 - [x] Le webhook Stripe est géré (`checkout.session.completed`)
-- [x] Le prof reçoit 100% du montant (moins frais Stripe)
+- [ ] Le prof reçoit 100% du montant (moins frais Stripe) — **non atteint** : décision du 2026-10-04 (ADR 004) = un compte Stripe par prof ; le code utilise encore une clé globale (compte plateforme). À livrer dans une story dédiée.
 
 **Note**: AC says `payment_intent.succeeded` but for Stripe Checkout, the correct event is `checkout.session.completed` which contains the metadata we need.
 
