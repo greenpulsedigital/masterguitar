@@ -46,3 +46,4 @@ Deux modes de vente :
 - Le webhook doit être idempotent : si appelé deux fois, ne pas créer deux `Purchase`.
 - L'accès est vérifié via `Purchase` (one-shot) ou `Subscription.status === ACTIVE` (abo).
 - Les remboursements sont gérés manuellement dans Stripe Dashboard pour le MVP.
+- Les doubles paiements sont enregistrés dans `PaymentIssue` et alertés par log ; le remboursement est effectué manuellement dans Stripe Dashboard, puis l'issue passe au statut `RESOLVED`.

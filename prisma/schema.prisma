@@ -17,6 +17,15 @@ enum Role {
   PROF
 }
 
+enum PaymentIssueType {
+  DUPLICATE_PURCHASE
+}
+
+enum PaymentIssueStatus {
+  OPEN
+  RESOLVED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -85,4 +94,17 @@ model Purchase {
   course   Course @relation(fields: [courseId], references: [id])
 
   @@unique([userId, courseId])
+}
+
+model PaymentIssue {
+  id              String            @id @default(cuid())
+  type            PaymentIssueType
+  status          PaymentIssueStatus @default(OPEN)
+  stripeSessionId String            @unique
+  stripePaymentId String
+  amount          Int               // cents
+  userId          String
+  courseId        String
+  createdAt       DateTime          @default(now())
+  resolvedAt      DateTime?
 }

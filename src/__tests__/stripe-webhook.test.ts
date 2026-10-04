@@ -7,6 +7,9 @@ vi.mock("@/lib/stripe", () => ({
     webhooks: {
       constructEvent: vi.fn(),
     },
+    refunds: {
+      create: vi.fn(),
+    },
   },
 }))
 
@@ -17,6 +20,9 @@ vi.mock("@/lib/prisma", () => ({
     purchase: {
       findUnique: vi.fn(),
       create: vi.fn(),
+    },
+    paymentIssue: {
+      upsert: vi.fn(),
     },
   },
 }))
@@ -122,10 +128,13 @@ describe("Stripe Webhook Handler", () => {
       expect(prisma.purchase.create).not.toHaveBeenCalled()
     })
 
-    it("treats a unique violation (concurrent replay) as already processed", async () => {
+    it("treats a unique violation as a concurrent replay when the session purchase now exists", async () => {
       const event = { type: "checkout.session.completed", data: { object: mockSession } }
+      const consoleError = vi.spyOn(console, "error")
       vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
-      vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
+      vi.mocked(prisma.purchase.findUnique)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ stripeSessionId: mockSession.id } as any)
       vi.mocked(prisma.purchase.create).mockRejectedValue(
         Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
       )
@@ -139,6 +148,76 @@ describe("Stripe Webhook Handler", () => {
       )
 
       expect(response.status).toBe(200)
+      expect(prisma.paymentIssue.upsert).not.toHaveBeenCalled()
+      expect(consoleError).not.toHaveBeenCalled()
+      consoleError.mockRestore()
+    })
+
+    it("records and alerts a real duplicate payment when the session purchase does not exist", async () => {
+      const event = { type: "checkout.session.completed", data: { object: mockSession } }
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+      vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
+      vi.mocked(prisma.purchase.create).mockRejectedValue(
+        Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
+      )
+      vi.mocked(prisma.paymentIssue.upsert).mockResolvedValue({} as any)
+
+      const response = await POST(
+        new NextRequest("http://localhost:3000/api/webhooks/stripe", {
+          method: "POST",
+          headers: { "stripe-signature": "test-signature" },
+          body: JSON.stringify(event),
+        })
+      )
+
+      expect(response.status).toBe(200)
+      expect(prisma.paymentIssue.upsert).toHaveBeenCalledWith({
+        where: { stripeSessionId: "cs_test_123" },
+        create: {
+          type: "DUPLICATE_PURCHASE",
+          stripeSessionId: "cs_test_123",
+          stripePaymentId: "pi_test_123",
+          amount: 5000,
+          userId: "user-1",
+          courseId: "course-1",
+        },
+        update: {},
+      })
+      expect(consoleError).toHaveBeenCalledWith(
+        "[PAYMENT_ALERT]",
+        {
+          sessionId: "cs_test_123",
+          paymentIntentId: "pi_test_123",
+          userId: "user-1",
+          courseId: "course-1",
+          amount: 5000,
+        },
+        "remboursement manuel requis"
+      )
+      expect(stripe.refunds.create).not.toHaveBeenCalled()
+      consoleError.mockRestore()
+    })
+
+    it("returns 500 when recording a real duplicate payment fails", async () => {
+      const event = { type: "checkout.session.completed", data: { object: mockSession } }
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+      vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
+      vi.mocked(prisma.purchase.create).mockRejectedValue(
+        Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
+      )
+      vi.mocked(prisma.paymentIssue.upsert).mockRejectedValue(new Error("Payment issue error"))
+
+      const response = await POST(
+        new NextRequest("http://localhost:3000/api/webhooks/stripe", {
+          method: "POST",
+          headers: { "stripe-signature": "test-signature" },
+          body: JSON.stringify(event),
+        })
+      )
+
+      expect(response.status).toBe(500)
+      expect(stripe.refunds.create).not.toHaveBeenCalled()
     })
 
     it("passes the raw body and the webhook secret to constructEvent", async () => {

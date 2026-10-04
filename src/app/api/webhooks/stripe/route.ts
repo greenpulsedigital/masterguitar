@@ -95,9 +95,41 @@ export async function POST(request: NextRequest) {
         })
       } catch (error) {
         // Unique violation: a concurrent delivery of the same event, or a second payment
-        // for a course the user already owns (needs a manual refund). Either way, don't make Stripe retry.
+        // for a course the user already owns. Distinguish both cases before acknowledging it.
         if ((error as { code?: string }).code === "P2002") {
-          console.error("Duplicate purchase ignored for session:", session.id)
+          const concurrentPurchase = await prisma.purchase.findUnique({
+            where: { stripeSessionId: session.id },
+          })
+
+          if (concurrentPurchase) {
+            console.log("Purchase already exists for session:", session.id)
+            return new Response("OK", { status: 200 })
+          }
+
+          await prisma.paymentIssue.upsert({
+            where: { stripeSessionId: session.id },
+            create: {
+              type: "DUPLICATE_PURCHASE",
+              stripeSessionId: session.id,
+              stripePaymentId: paymentIntentId,
+              amount: session.amount_total,
+              userId,
+              courseId,
+            },
+            update: {},
+          })
+
+          console.error(
+            "[PAYMENT_ALERT]",
+            {
+              sessionId: session.id,
+              paymentIntentId,
+              userId,
+              courseId,
+              amount: session.amount_total,
+            },
+            "remboursement manuel requis"
+          )
           return new Response("OK", { status: 200 })
         }
         throw error

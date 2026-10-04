@@ -18,6 +18,9 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    paymentIssue: {
+      upsert: vi.fn(),
+    },
   },
 }))
 
