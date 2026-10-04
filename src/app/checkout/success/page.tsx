@@ -23,7 +23,7 @@ export default async function SuccessPage({
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-lg">Vous possédez déjà ce cours.</p>
-            <Button render={<Link href="/" />}>Retour à l&apos;accueil</Button>
+            <Button className="h-11" render={<Link href="/" />}>Retour à l&apos;accueil</Button>
           </CardContent>
         </Card>
       </div>
@@ -66,9 +66,11 @@ export default async function SuccessPage({
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-lg">
-              Votre paiement n&apos;est pas encore confirmé. L&apos;accès au cours sera activé dès sa validation.
+              {course
+                ? `Votre paiement pour « ${course.title} » n'est pas encore confirmé. L'accès au cours sera activé dès sa validation.`
+                : "Votre paiement n'est pas encore confirmé. L'accès au cours sera activé dès sa validation."}
             </p>
-            <Button render={<Link href="/" />}>Retour à l&apos;accueil</Button>
+            <Button className="h-11" render={<Link href="/" />}>Retour à l&apos;accueil</Button>
           </CardContent>
         </Card>
       </div>
@@ -88,7 +90,7 @@ export default async function SuccessPage({
               : "Votre paiement a été traité avec succès. Vous avez maintenant accès à votre cours."}
           </p>
           <div className="flex gap-4">
-            <Button render={<Link href="/" />}>Retour à l&apos;accueil</Button>
+            <Button className="h-11" render={<Link href="/" />}>Retour à l&apos;accueil</Button>
           </div>
         </CardContent>
       </Card>

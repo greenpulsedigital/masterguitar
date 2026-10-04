@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 // Mock dependencies
 vi.mock("@/lib/auth", () => ({
@@ -28,6 +28,10 @@ vi.mock("@/lib/stripe", () => ({
   },
 }))
 
+vi.mock("@/app/checkout/actions", () => ({
+  createCheckoutSession: vi.fn(),
+}))
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn((url: string) => {
     throw new Error(`NEXT_REDIRECT:${url}`)
@@ -40,6 +44,8 @@ vi.mock("next/navigation", () => ({
 import { auth } from "@/lib/auth"
 import { getCourseById } from "@/lib/queries/course"
 import { prisma } from "@/lib/prisma"
+import { createCheckoutSession } from "@/app/checkout/actions"
+import { CheckoutButton } from "@/app/checkout/[courseId]/checkout-button"
 
 describe("Checkout Page", () => {
   const mockUser = {
@@ -129,7 +135,37 @@ describe("Checkout Page", () => {
     render(result as React.ReactElement)
 
     expect(screen.getByText("Test Course")).toBeInTheDocument()
-    expect(screen.getByText("50.00 €")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /procéder au paiement/i })).toBeInTheDocument()
+    expect(screen.getByText("50,00 €")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /procéder au paiement/i })).toHaveClass("h-11")
+  })
+
+  it("should expose checkout errors as alerts", async () => {
+    vi.mocked(createCheckoutSession).mockResolvedValue({
+      error: "Erreur lors de la création de la session de paiement",
+    })
+
+    render(<CheckoutButton courseId="course-1" />)
+    fireEvent.click(screen.getByRole("button", { name: /procéder au paiement/i }))
+
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent("Erreur lors de la création de la session de paiement")
+  })
+
+  it("should expose the loading state with aria-busy on the payment button", async () => {
+    let resolveCheckout: ((result: { error: string }) => void) | undefined
+    vi.mocked(createCheckoutSession).mockReturnValue(
+      new Promise<{ error: string }>((resolve) => {
+        resolveCheckout = resolve
+      })
+    )
+
+    render(<CheckoutButton courseId="course-1" />)
+    const button = screen.getByRole("button", { name: /procéder au paiement/i })
+    fireEvent.click(button)
+
+    await waitFor(() => expect(button).toHaveAttribute("aria-busy", "true"))
+
+    resolveCheckout?.({ error: "Erreur lors de la création de la session de paiement" })
+    await waitFor(() => expect(button).toHaveAttribute("aria-busy", "false"))
   })
 })

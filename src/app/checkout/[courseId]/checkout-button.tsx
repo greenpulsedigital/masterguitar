@@ -37,14 +37,18 @@ export function CheckoutButton({ courseId }: CheckoutButtonProps) {
   return (
     <div className="space-y-4">
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded">
+        <div
+          role="alert"
+          className="bg-destructive/10 text-destructive px-4 py-3 rounded"
+        >
           {error}
         </div>
       )}
       <Button
         onClick={handleCheckout}
         disabled={isLoading}
-        className="w-full"
+        aria-busy={isLoading}
+        className="w-full h-11"
         size="lg"
       >
         {isLoading ? "Redirection..." : "Procéder au paiement"}
