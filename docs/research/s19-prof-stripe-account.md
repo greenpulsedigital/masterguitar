@@ -83,6 +83,8 @@ Le mapping fonctionnel minimal est certain au niveau des opérations utilisées 
 | Supprimer un endpoint webhook | `webhookEndpoints.del` ou équivalent de suppression | Écriture/suppression sur Webhook Endpoints | Le besoin de suppression est imposé par la déconnexion ; le nom de permission et la possibilité de suppression avec la même clé sont **À VÉRIFIER**. |
 | Lire le compte Stripe | opération de lecture de l’objet Account | Lecture sur Account | Le compte doit être identifié et son mode vérifié ; le nom exact de l’appel, le champ de mode fiable et la permission Dashboard sont **À VÉRIFIER**. |
 
+**Mise à jour du 2026-10-04 :** les identifiants `connected_account_read`, `checkout_session_write` et `webhook_write` sont confirmés par les erreurs de Stripe (voir « Résultats des tests ») ; les lignes de lecture et de suppression ci-dessus restent à vérifier.
+
 À ne pas accorder par défaut : remboursements, transferts, paiements directs, clients, produits, prix, abonnements ou balance si aucune étape de s19/s20 ne les utilise. Les abonnements relèvent de s13 et devront faire l’objet d’une vérification séparée avant d’élargir les permissions.
 
 ### Verification procedure before the plan
@@ -91,7 +93,28 @@ Avec une clé restreinte de test dédiée et sans la committer : créer une Chec
 
 Le script `scripts/check-stripe-restricted-key.sh` exécute ces appels avec une clé `rk_test_...` (il refuse les clés live et les clés secrètes complètes, masque les clés dans sa sortie et supprime l'endpoint de test). Usage : `read -rs STRIPE_RK; export STRIPE_RK; bash scripts/check-stripe-restricted-key.sh`. Pour trouver l'ensemble minimal, retirer les permissions une par une de la clé et relancer.
 
-**À VÉRIFIER :** confirmer aussi si le secret de signature est renvoyé une seule fois par la création de l’endpoint. Le code doit le chiffrer immédiatement et considérer toute réponse ultérieure sans secret comme une erreur de provisioning, sans journaliser la réponse sensible.
+**Confirmé (test du 2026-10-04) :** le secret de signature n'est renvoyé qu'à la création de l'endpoint ; la relecture ne le contient pas. Le code doit donc le chiffrer immédiatement et considérer toute réponse ultérieure sans secret comme une erreur de provisioning, sans journaliser la réponse sensible. La procédure de récupération d'un secret perdu reste à définir (suppression puis recréation de l'endpoint).
+
+### Résultats des tests du 2026-10-04
+
+Deux passages du script `scripts/check-stripe-restricted-key.sh`, sur un compte Stripe en mode test. Aucune clé n'est consignée ici.
+
+**1. Clé restreinte sans aucune permission** : l'authentification passe, mais les trois premiers appels sont refusés (HTTP 403, `more_permissions_required`). Stripe indique dans chaque erreur la permission manquante :
+
+| Opération | Permission réclamée | Identifiant |
+|---|---|---|
+| Lire le compte | Accounts Read | `connected_account_read` |
+| Créer une Checkout Session | Checkout Sessions Write | `checkout_session_write` |
+| Créer un endpoint webhook | Webhook Endpoints, Event Destinations Write | `webhook_write` |
+
+Une clé restreinte peut donc recevoir la permission d'écriture sur les webhooks. Les étapes de relecture de la session, de relecture et de suppression de l'endpoint n'ont pas pu être testées (non exécutées après le premier refus).
+
+**2. Clé secrète complète de test** (passage qui valide la mécanique du script, **pas** les permissions minimales) : les six appels réussissent. Constats :
+- le secret de signature du webhook est renvoyé à la création (préfixe `whsec_`) et **absent** à la relecture ;
+- l'objet compte **ne contient pas de champ `livemode`** (champs renvoyés : `business_profile`, `business_type`, `capabilities`, `charges_enabled`, `controller`, `country`, `created`, `default_currency`, `details_submitted`, `email`, `id`, `object`, `payouts_enabled`, `settings`, `type`) ;
+- la lecture du compte expose des données personnelles du prof (email, profil d'entreprise, pays).
+
+**Encore à établir** : l'ensemble minimal de permissions d'une clé restreinte, en particulier si la relecture d'une session, la relecture et la suppression d'un endpoint demandent d'autres permissions que celles ci-dessus (lecture sur Checkout Sessions, lecture sur les webhooks). Procédure : activer les trois permissions ci-dessus sur la clé restreinte, relancer le script, puis retirer les permissions une par une.
 
 ## Local development
 
@@ -108,7 +131,9 @@ La CI doit continuer à mocker Stripe. Elle n’a pas besoin de créer de vrais 
 
 Décision proposée : les clés de test sont acceptées uniquement en développement/test ; une clé de test doit être refusée en production avant stockage et avant création d’endpoint. En développement, stocker le mode `test` explicitement et n’autoriser que des cours/événements de test.
 
-Le préfixe de clé peut servir à un contrôle local précoce, mais il ne doit pas être la seule preuve du mode. Le signal Stripe fiable à utiliser pour confirmer le mode du compte, ainsi que le champ exact à lire, sont **À VÉRIFIER** avec une clé de test puis une clé live contrôlée. Quel que soit le résultat, le message utilisateur reste générique et les détails restent dans une journalisation opérationnelle sans secret.
+**Confirmé (test du 2026-10-04) :** la réponse de lecture du compte ne contient pas de champ `livemode` ; le mode ne peut donc pas être lu sur l'objet compte. Le mode enregistré doit être déduit du **préfixe de la clé** (`rk_test_` / `rk_live_`), contrôlé localement avant tout appel, puis enregistré explicitement avec le compte. Un second signal peut venir de l'objet Checkout Session ou de l'endpoint webhook créé (non exploré par le script : **À VÉRIFIER** si un contrôle croisé est jugé nécessaire). Quel que soit le résultat, le message utilisateur reste générique et les détails restent dans une journalisation opérationnelle sans secret.
+
+**Minimisation des données :** la lecture du compte renvoie des données personnelles du prof. s19 ne doit conserver que `stripeAccountId`, le mode et le statut, et ne rien journaliser du reste.
 
 ## Encryption-key storage and rotation
 
@@ -152,11 +177,11 @@ Les achats existants doivent continuer à donner l’accès déjà accordé. Pou
 
 ## Points à vérifier avant le plan
 
-- [ ] Tester avec une vraie clé restreinte de test la création, lecture et suppression d’un endpoint webhook.
-- [ ] Confirmer les libellés exacts des permissions Stripe pour Checkout Sessions, Webhook Endpoints et Account.
+- [ ] Tester avec une vraie clé restreinte de test la création, lecture et suppression d’un endpoint webhook. *(partiel : la création exige `webhook_write` ; lecture et suppression non testées avec une clé restreinte)*
+- [ ] Confirmer les libellés exacts des permissions Stripe pour Checkout Sessions, Webhook Endpoints et Account. *(partiel : écriture Checkout Sessions, écriture Webhook Endpoints et lecture Account confirmées ; les lectures et la suppression restent à confirmer)*
 - [ ] Confirmer que la même clé restreinte peut effectuer toutes les opérations nécessaires, y compris la suppression d’un endpoint.
-- [ ] Confirmer la réponse exacte de la lecture du compte et le signal fiable `test` / `live`.
-- [ ] Confirmer si le secret de signature est renvoyé une seule fois lors de la création de l’endpoint et comment récupérer une valeur perdue.
+- [x] Confirmer la réponse exacte de la lecture du compte et le signal fiable `test` / `live`. *(fait : pas de champ `livemode` ; le mode se déduit du préfixe de la clé)*
+- [x] Confirmer si le secret de signature est renvoyé une seule fois lors de la création de l’endpoint et comment récupérer une valeur perdue. *(fait : renvoyé uniquement à la création ; une valeur perdue impose de supprimer et recréer l'endpoint)*
 - [ ] Confirmer la gestion Stripe CLI du secret de forwarding et la compatibilité avec la route `/api/webhooks/stripe/<profId>`.
 - [ ] Vérifier le fonctionnement d’un tunnel HTTPS local et la politique de durée de vie de son URL.
 - [ ] Définir le stockage de `STRIPE_KEYS_ENCRYPTION_KEY` pour l’hébergeur retenu, ou documenter le secret d’environnement portable pour le MVP.
@@ -171,4 +196,4 @@ Les achats existants doivent continuer à donner l’accès déjà accordé. Pou
 
 Le code actuel repose entièrement sur une clé et un webhook Stripe globaux ; s19 doit introduire un compte et un secret par prof avant que s20 puisse créer des paiements au bon endroit. La recommandation est de garder la clé restreinte collée pour le MVP, avec chiffrement AES-256-GCM, clé maître hors base, refus des clés de test en production et validation réelle des permissions Stripe. OAuth Connect Standard est le plan de repli si ces permissions ou le risque de custody ne sont pas acceptables.
 
-Les points marqués **À VÉRIFIER** concernent les libellés et capacités exacts des permissions de clés restreintes, la lecture du mode du compte, la restitution unique du secret webhook et les détails Stripe CLI/tunnel. Les achats existants doivent rester attachés au compte plateforme d’origine ; ils ne sont pas transférés par la connexion d’un prof.
+Le test du 2026-10-04 a confirmé que le secret de webhook n'est renvoyé qu'à la création, que l'objet compte n'a pas de champ de mode (à déduire du préfixe de la clé) et les identifiants de trois permissions ; l'ensemble minimal d'une clé restreinte reste à établir. Les points encore marqués **À VÉRIFIER** concernent les libellés et capacités exacts des permissions de clés restreintes, la lecture du mode du compte, la restitution unique du secret webhook et les détails Stripe CLI/tunnel. Les achats existants doivent rester attachés au compte plateforme d’origine ; ils ne sont pas transférés par la connexion d’un prof.
