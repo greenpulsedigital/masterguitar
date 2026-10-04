@@ -46,30 +46,30 @@ Sources : `docs/stories.md` (s19, s20), `docs/research/s19-prof-stripe-account.m
 
 Chaque tâche : tests d'abord, puis code, puis `npx tsc --noEmit`, `npm run lint` et `npx vitest run`. La CI est bloquante (`Types, tests and build`, `Lint`) et aucun test n'appelle Stripe ni ne contient de vraie clé.
 
-### 1. [ ] Modèles `ProfStripeAccount` et `RateLimit`
+### 1. [x] Modèles `ProfStripeAccount` et `RateLimit`
 - Enums `StripeMode { TEST LIVE }` et `StripeAccountStatus { ACTIVE INVALID DISCONNECTING }`.
 - `ProfStripeAccount` : `id`, `profId` (unique, relation vers `User`), `stripeAccountId`, `mode`, `status`, `keyLast4`, `encryptedSecretKey`, `webhookEndpointId?`, `encryptedWebhookSecret?`, `encryptionKeyVersion Int`, `reconcileUntil DateTime?`, `createdAt`, `updatedAt` ; `@@unique([stripeAccountId, mode])`.
 - `RateLimit` : `key` (ex. `connect:user:<id>`, `connect:ip:<ip>`), `windowStart`, `count` ; `@@id([key, windowStart])`.
 - Migration `s19_prof_stripe_account`, vérifiée avec `prisma migrate diff` (aucune différence entre migrations et schéma) puis `prisma generate`.
 - **Test** : le schéma compile ; test d'unicité `(stripeAccountId, mode)` et `profId` sur Prisma mocké comme les tests de modèle existants.
 
-### 2. [ ] Chiffrement des secrets — `src/lib/stripe-keys.ts`
+### 2. [x] Chiffrement des secrets — `src/lib/stripe-keys.ts`
 - `encryptSecret(plain, { profId, mode, usage })` et `decryptSecret(blob, { profId, mode, usage })`, `usage` ∈ `secret-key` | `webhook-secret`.
 - AES-256-GCM via `node:crypto`, IV de 12 octets aléatoire **par chiffrement**, format `v<version>:iv:tag:ciphertext` (base64), données associées `profId|mode|usage|version`.
 - Clé de 32 octets en base64 dans `STRIPE_KEYS_ENCRYPTION_KEY` (version 1) ; autres versions lues dans `STRIPE_KEYS_ENCRYPTION_KEY_V<n>`. Variable absente ou de mauvaise longueur : erreur au premier usage, jamais de repli.
 - Échec fermé : tag, IV, version ou données associées incohérents lèvent une erreur générique **sans** contenu du secret.
 - **Tests** : aller-retour ; deux chiffrements du même texte donnent des blobs différents (IV unique) ; changement de `profId`, de mode, d'usage ou de version fait échouer ; blob altéré fait échouer ; clé absente / trop courte ; l'erreur ne contient pas le clair.
 
-### 3. [ ] Limitation de débit — `src/lib/rate-limit.ts`
+### 3. [x] Limitation de débit — `src/lib/rate-limit.ts`
 - `checkRateLimit(key, { max, windowSeconds })` basé sur la table `RateLimit` (fenêtre fixe), compatible avec plusieurs instances.
 - Seuils de départ, constantes nommées : **5 tentatives / 15 min par utilisateur, 20 / h par adresse IP**. Adresse IP lue dans `x-forwarded-for` (premier élément) ; valeur absente = seau `unknown`. Dépend de l'hébergeur (proxy de confiance) : à noter dans le code.
 - **Tests** : sous le seuil OK, au-dessus refusé, nouvelle fenêtre réinitialise, clés indépendantes.
 
-### 4. [ ] Rôle `PROF` relu en base — `src/lib/require-prof.ts`
+### 4. [x] Rôle `PROF` relu en base — `src/lib/require-prof.ts`
 - `requireProf()` : `auth()`, puis lecture de l'utilisateur en base ; refuse si absent ou `role !== "PROF"`. Retourne `{ userId }`. À utiliser pour toutes les actions de s19 (le JWT peut être périmé).
 - **Tests** : sans session, rôle STUDENT en base alors que le JWT dit PROF, utilisateur supprimé, PROF valide.
 
-### 5. [ ] Service du compte Stripe du prof — `src/lib/prof-stripe-account.ts`
+### 5. [x] Service du compte Stripe du prof — `src/lib/prof-stripe-account.ts`
 - `parseRestrictedKey(raw, env)` : trim, longueur maximale, motif `^rk_(test|live)_[A-Za-z0-9]+$`, mode dérivé du préfixe, règles P4 ; toute clé `sk_` ou invalide donne le même résultat « refusée ».
 - Client Stripe par clé via une fabrique injectable (`createStripeClient(key)`), pour tester sans réseau ; même version d'API que `src/lib/stripe.ts`.
 - `connectAccount({ profId, rawKey })` : (1) analyse locale, (2) lecture du compte Stripe pour obtenir `stripeAccountId` (tout échec Stripe = refus générique), (3) refus générique si `(stripeAccountId, mode)` appartient à un autre prof, (4) création de l'endpoint webhook (tâche 6), (5) chiffrement puis enregistrement du compte, du secret de webhook et des 4 derniers caractères en **une** transaction ; si l'étape 5 échoue, suppression de l'endpoint créé (au mieux).
@@ -78,6 +78,7 @@ Chaque tâche : tests d'abord, puis code, puis `npx tsc --noEmit`, `npm run lint
 - **Tests (Stripe mocké)** : clé valide, clé `sk_` / live en dev / test en prod refusées, erreur Stripe quelconque (401, 403, 429, réseau) = même refus, compte déjà lié à un autre prof refusé, échec d'enregistrement supprime l'endpoint, connexion refusée en `ACTIVE` / `DISCONNECTING` et permise en `INVALID`, déconnexion puis purge avant / après l'échéance, aucune valeur de clé dans les erreurs ni dans les appels à `console`.
 
 ### 6. [ ] Endpoint webhook du prof — dans `prof-stripe-account.ts` **(bloquée par P1)**
+> **État** : la création de l'endpoint (paramètres, clé d'idempotence, chiffrement immédiat du secret, erreur si le secret est absent, nettoyage si l'enregistrement échoue) et la suppression au mieux (remplacement de clé, fin de fenêtre) sont **faites dans la tâche 5** et testées. Restent, **bloquées par P1** : la réutilisation d'un endpoint déjà existant (lecture/liste) et le comportement exact si une clé restreinte ne peut pas supprimer un endpoint.
 - Création : `webhookEndpoints.create` avec `url = <getBaseUrl()>/api/webhooks/stripe/<profId>`, événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`, clé d'idempotence stable `webhook:<profId>:<mode>`. Le `secret` n'est renvoyé qu'à la création : le chiffrer immédiatement, ne jamais le journaliser, et traiter une réponse sans secret comme une erreur de provisioning.
 - Réutilisation d'un endpoint identique existant, suppression : **opérations de lecture et de suppression soumises à P1**. Si une clé restreinte ne peut pas les faire, le comportement (message générique, nettoyage manuel documenté) est décidé avec le résultat de P1 avant d'écrire cette tâche.
 - **Tests (Stripe mocké)** : paramètres exacts de création, secret chiffré avant tout autre traitement, réponse sans secret = erreur, retry n'ouvre pas un second endpoint.
