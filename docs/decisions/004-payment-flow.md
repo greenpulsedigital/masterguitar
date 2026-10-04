@@ -43,7 +43,7 @@ Deux modes de vente :
 ## Consequences
 
 - **Décision (2026-10-04) : un compte Stripe par prof, sans Stripe Connect.** La plateforme n'encaisse pas l'argent : chaque prof configure son propre compte Stripe dans son profil, et le checkout d'un cours est créé avec le compte du prof de ce cours. L'hypothèse d'un compte plateforme qui reverse aux profs est écartée.
-- **État du code : non implémenté.** Le checkout et le webhook utilisent aujourd'hui une seule clé globale (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`), donc l'argent arrive sur le compte de la plateforme. Cet écart bloque la livraison de s07 (voir `docs/reviews/s07-stripe-checkout.md`) et fait l'objet d'une story dédiée.
+- **État du code : non implémenté.** Le checkout et le webhook utilisent aujourd'hui une seule clé globale (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`), donc l'argent arrive sur le compte de la plateforme. Cet écart bloque la livraison de s07 (voir `docs/reviews/s07-stripe-checkout.md`) et fait l'objet de deux stories : `s19-prof-stripe-account` (connexion du compte du prof) et `s20-checkout-per-prof` (paiements et webhooks sur ce compte).
 - **Points à cadrer dans cette story** : stockage chiffré des clés du prof (jamais renvoyées au client), vérification de la clé à la saisie, résolution du compte au checkout (clé du `profId` du cours), un secret de webhook par prof et un endpoint capable d'identifier le prof avant de vérifier la signature, comportement tant qu'un prof n'a pas configuré Stripe (cours non achetable), et prise en charge du statut des abonnements.
 - Le webhook doit être idempotent : si appelé deux fois, ne pas créer deux `Purchase`.
 - L'accès est vérifié via `Purchase` (one-shot) ou `Subscription.status === ACTIVE` (abo).

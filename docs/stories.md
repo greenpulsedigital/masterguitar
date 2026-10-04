@@ -179,6 +179,7 @@ s06-sales-page
 - Webhook: `/api/webhooks/stripe`
 - L'élève doit avoir un compte (créé au checkout ou pré-existant)
 - Référence Podia: flow d'achat
+- **Livraison conditionnée à s20-checkout-per-prof** : le critère « le prof reçoit 100% » n'est atteint que lorsque les paiements passent par le compte Stripe du prof (ADR 004, décision du 2026-10-04). Avec la clé globale actuelle, l'argent arrive sur le compte de la plateforme.
 
 ---
 
@@ -319,7 +320,7 @@ s03-course-crud, s07-stripe-checkout
 - [ ] Le prof voit les abonnements actifs dans son dashboard
 
 ### Dependencies
-s07-stripe-checkout
+s07-stripe-checkout, s20-checkout-per-prof
 
 ### Agentic notes
 - Stripe Subscriptions API
@@ -451,3 +452,74 @@ s07-stripe-checkout
 - Page post-checkout avec offre "one-click"
 - Stripe: réutiliser le PaymentMethod du client pour charge rapide
 - Référence Podia: upsell flows
+
+---
+
+## Story s19-prof-stripe-account — Connexion du compte Stripe du prof
+
+**As a** prof **I want** connecter mon propre compte Stripe **so that** les paiements de mes élèves arrivent directement chez moi, sans passer par la plateforme.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Le prof peut saisir sa clé API Stripe depuis `/dashboard/settings/payments` (clé restreinte recommandée, permissions minimales indiquées dans l'interface)
+- [ ] La clé est vérifiée auprès de Stripe avant d'être enregistrée ; une clé invalide est refusée avec un message clair
+- [ ] La clé est stockée chiffrée, jamais renvoyée au client ni écrite dans les logs ; seuls les 4 derniers caractères et le mode (test / live) sont affichés
+- [ ] À la connexion, un endpoint webhook est créé automatiquement sur le compte du prof (événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`) et son secret de signature est stocké chiffré
+- [ ] Le prof peut déconnecter son compte : la clé et le secret sont supprimés, l'endpoint webhook est supprimé côté Stripe (au mieux) et ses cours deviennent non achetables
+- [ ] Un prof sans compte Stripe valide ne peut pas publier un cours, et voit pourquoi (lien vers la page de paiement)
+- [ ] Le statut du compte (non configuré / connecté / clé invalide) est visible dans le dashboard
+
+### Dependencies
+s02-prof-auth, s03-course-crud
+
+### Agentic notes
+- Décision de référence : ADR 004 (2026-10-04) — un compte Stripe par prof, sans Stripe Connect. La plateforme n'encaisse pas l'argent.
+- **Story avec interface** : passer par `/ks-design` (page `/dashboard/settings/payments`, composants du design system uniquement).
+- Modèle `ProfStripeAccount` séparé de `User` : `profId` unique, `encryptedSecretKey`, `keyLast4`, `mode` (test / live), `status`, `webhookEndpointId`, `encryptedWebhookSecret`, dates.
+- Chiffrement : AES-256-GCM via `node:crypto`, clé de 32 octets dans une variable d'environnement dédiée (`STRIPE_KEYS_ENCRYPTION_KEY`, à documenter dans `.env.example`, jamais en base). Helper unique `src/lib/stripe-keys.ts` (chiffrer / déchiffrer) ; aucun autre code ne manipule la clé en clair.
+- Vérification de la clé : un appel de lecture à Stripe avec la clé saisie (à choisir dans la doc, compatible avec une clé restreinte). Création du webhook : `webhookEndpoints.create` renvoie le secret de signature **une seule fois** (à confirmer dans la doc Stripe) — le stocker immédiatement. URL de l'endpoint : `<URL publique>/api/webhooks/stripe/<profId>` (réalisé dans s20).
+- Server Actions `connectStripeAccount` / `disconnectStripeAccount` : rôle `PROF` obligatoire, validation Zod, `redirect()` hors des `try/catch` (leçon du dépôt), erreurs Stripe traduites en messages sans fuite de la clé.
+- `toggleCourseStatus` : refuser le passage en `PUBLISHED` si le prof n'a pas de compte `ACTIVE`.
+- Le dépôt est public et la CI n'utilise que de fausses valeurs : aucun test ne doit appeler Stripe ; mocker le client.
+- **À trancher avant le plan** :
+  1. *Clé collée ou OAuth Connect Standard ?* L'ADR retient les clés collées, mais stocker des clés secrètes de tiers est un risque (fuite de la base = accès aux comptes). Atténuations : clés restreintes, chiffrement, clé de chiffrement hors base. À reconfirmer ; un OAuth éviterait de stocker des clés mais change l'ADR.
+  2. *Clés de test en production* : proposition — refusées en production, acceptées en développement.
+  3. *Développement local* : Stripe n'atteint pas `localhost` ; prévoir Stripe CLI / tunnel, ou une saisie manuelle du secret de webhook en dev.
+  4. *Rotation* de la clé de chiffrement : hors périmètre, mais le format doit permettre un identifiant de version.
+  5. *Ventes déjà faites sur le compte de la plateforme* : confirmer qu'il n'existe que des achats de test.
+- Référence Podia : réglages de paiement du créateur
+
+---
+
+## Story s20-checkout-per-prof — Paiements sur le compte du prof
+
+**As a** élève **I want** payer sur le compte Stripe du prof **so that** le prof reçoit 100% du montant (moins frais Stripe) sans passer par la plateforme.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Le checkout d'un cours crée la session Stripe avec la clé du prof du cours (plus de clé globale pour les paiements)
+- [ ] Un cours dont le prof n'a pas de compte valide n'est pas achetable (message clair, aucun appel à Stripe)
+- [ ] Le webhook est reçu sur un endpoint propre au prof et vérifié avec le secret de signature de ce prof
+- [ ] Un événement signé par le compte d'un prof ne peut créer d'accès que pour les cours de ce prof
+- [ ] La page de succès retrouve la session sur le compte du prof du cours et vérifie que l'utilisateur est l'acheteur
+- [ ] Les doubles paiements (`PaymentIssue`) indiquent le prof concerné, pour que le remboursement soit fait sur son compte Stripe
+- [ ] Les variables `STRIPE_SECRET_KEY` et `STRIPE_WEBHOOK_SECRET` globales ne sont plus nécessaires au paiement
+
+### Dependencies
+s07-stripe-checkout, s19-prof-stripe-account
+
+### Agentic notes
+- `src/lib/stripe.ts` lève une erreur à l'import si `STRIPE_SECRET_KEY` est absente : le remplacer par une fabrique `getStripeForProf(profId)` (déchiffre la clé, instancie le client avec la même version d'API). Pas de cache entre requêtes.
+- Checkout (`src/app/checkout/actions.ts`) : résoudre le prof via `course.profId`, refuser si pas de compte `ACTIVE`. `success_url` doit contenir le `courseId` pour que la page de succès retrouve le bon compte avant `sessions.retrieve`.
+- Webhook : déplacer vers `src/app/api/webhooks/stripe/[profId]/route.ts`. Lire le secret du prof, vérifier la signature sur le corps brut, puis **contrôler `course.profId === profId`** : sans ce contrôle, un prof pourrait fabriquer un événement signé par son propre compte pour s'octroyer l'accès au cours d'un autre prof. Conserver tout le reste (idempotence, `payment_status === "paid"`, `async_payment_succeeded`, `P2002` et `PaymentIssue`).
+- L'ancien endpoint `/api/webhooks/stripe` est supprimé ; prévenir dans la PR que les endpoints Stripe de la plateforme sont à retirer du dashboard.
+- `PaymentIssue` : ajouter `profId` (migration) ou le dériver du `courseId`. Mettre à jour la note de l'ADR 004 : le remboursement d'un double paiement se fait dans le Stripe du prof.
+- Retirer les variables Stripe globales de `.env.example` et du workflow CI (qui fournit aujourd'hui de fausses valeurs).
+- À la livraison : cocher le critère « 100% » du plan s07, refaire la re-revue (`docs/reviews/s07-stripe-checkout.md`) et lever le blocage « Ship allowed: no » si le reste est satisfait.
+- Tests : aucun appel Stripe réel ; couvrir le cas cross-prof (événement signé par le prof A pour un cours du prof B → refusé), prof sans compte, clé invalide (Stripe 401 → compte marqué invalide).
+- Déploiement : les profs doivent connecter leur compte (s19) avant que leurs cours soient achetables ; appliquer les migrations ; abonner correctement les nouveaux endpoints.
+- Référence Podia : flow d'achat
