@@ -15,6 +15,8 @@ vi.mock("next/navigation", () => ({
 import { getCourseBySlug } from "@/lib/queries/course"
 import { notFound } from "next/navigation"
 
+type CourseResult = Awaited<ReturnType<typeof getCourseBySlug>>
+
 describe("Sales Page", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -51,7 +53,7 @@ describe("Sales Page", () => {
       ],
     }
 
-    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as unknown as CourseResult)
 
     // The page should call getCourseBySlug with the slug
     const slug = "guitare-debutant"
@@ -103,7 +105,7 @@ describe("Sales Page", () => {
       modules: [],
     }
 
-    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as unknown as CourseResult)
 
     const course = await getCourseBySlug("new-course")
 
@@ -129,7 +131,7 @@ describe("Sales Page", () => {
       modules: [],
     }
 
-    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as unknown as CourseResult)
 
     const course = await getCourseBySlug("no-thumb-course")
 
@@ -155,7 +157,7 @@ describe("Sales Page", () => {
       modules: [],
     }
 
-    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as any)
+    vi.mocked(getCourseBySlug).mockResolvedValueOnce(mockCourse as unknown as CourseResult)
 
     const course = await getCourseBySlug("no-desc-course")
 

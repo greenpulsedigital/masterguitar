@@ -47,6 +47,9 @@ import { prisma } from "@/lib/prisma"
 import { createCheckoutSession } from "@/app/checkout/actions"
 import { CheckoutButton } from "@/app/checkout/[courseId]/checkout-button"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type PurchaseResult = Awaited<ReturnType<typeof prisma.purchase.findFirst>>
+
 describe("Checkout Page", () => {
   const mockUser = {
     user: {
@@ -70,7 +73,7 @@ describe("Checkout Page", () => {
   })
 
   it("should redirect to login if user is not authenticated", async () => {
-    vi.mocked(auth).mockResolvedValue(null as any)
+    vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
@@ -80,7 +83,7 @@ describe("Checkout Page", () => {
   })
 
   it("should return 404 if course is not found", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(getCourseById).mockResolvedValue(null)
 
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
@@ -91,7 +94,7 @@ describe("Checkout Page", () => {
   })
 
   it("should return 404 if course is not published", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(getCourseById).mockResolvedValue({
       ...mockCourse,
       status: "DRAFT" as const,
@@ -105,7 +108,7 @@ describe("Checkout Page", () => {
   })
 
   it("should redirect to success if user already owns the course", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(getCourseById).mockResolvedValue(mockCourse)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue({
       id: "purchase-1",
@@ -115,7 +118,7 @@ describe("Checkout Page", () => {
       stripePaymentId: "pi_123",
       stripeSessionId: "cs_123",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseResult)
 
     const CheckoutPage = (await import("@/app/checkout/[courseId]/page")).default
 
@@ -125,7 +128,7 @@ describe("Checkout Page", () => {
   })
 
   it("should render checkout page for valid course", async () => {
-    vi.mocked(auth).mockResolvedValue(mockUser as any)
+    vi.mocked(auth).mockResolvedValue(mockUser as unknown as AuthResult)
     vi.mocked(getCourseById).mockResolvedValue(mockCourse)
     vi.mocked(prisma.purchase.findFirst).mockResolvedValue(null)
 

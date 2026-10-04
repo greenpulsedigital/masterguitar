@@ -12,8 +12,6 @@ vi.mock("@/app/(dashboard)/dashboard/courses/actions", () => ({
 }))
 
 import {
-  createLesson,
-  updateLesson,
   deleteLesson,
   reorderLesson,
 } from "@/app/(dashboard)/dashboard/courses/actions"

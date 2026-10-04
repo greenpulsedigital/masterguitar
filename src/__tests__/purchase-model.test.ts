@@ -19,6 +19,11 @@ vi.mock("@/lib/prisma", () => ({
 
 import { prisma } from "@/lib/prisma"
 
+type PurchaseCreateResult = Awaited<ReturnType<typeof prisma.purchase.create>>
+type PurchaseResult = Awaited<ReturnType<typeof prisma.purchase.findUnique>>
+type UserResult = Awaited<ReturnType<typeof prisma.user.findUnique>>
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+
 describe("Purchase Model Schema", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -43,7 +48,7 @@ describe("Purchase Model Schema", () => {
       createdAt: new Date(),
     }
 
-    vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase as any)
+    vi.mocked(prisma.purchase.create).mockResolvedValue(mockPurchase as unknown as PurchaseCreateResult)
 
     const purchase = await prisma.purchase.create({
       data: {
@@ -76,7 +81,7 @@ describe("Purchase Model Schema", () => {
       createdAt: new Date(),
     }
 
-    vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase as any)
+    vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase as unknown as PurchaseResult)
 
     const purchase = await prisma.purchase.findUnique({
       where: { stripePaymentId: "pi_test_unique" },
@@ -97,7 +102,7 @@ describe("Purchase Model Schema", () => {
       createdAt: new Date(),
     }
 
-    vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase as any)
+    vi.mocked(prisma.purchase.findUnique).mockResolvedValue(mockPurchase as unknown as PurchaseResult)
 
     const purchase = await prisma.purchase.findUnique({
       where: { stripeSessionId: "cs_test_unique" },
@@ -129,7 +134,7 @@ describe("Purchase Model Schema", () => {
       ],
     }
 
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as unknown as UserResult)
 
     const user = await prisma.user.findUnique({
       where: { id: "user-1" },
@@ -165,7 +170,7 @@ describe("Purchase Model Schema", () => {
       ],
     }
 
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
 
     const course = await prisma.course.findUnique({
       where: { id: "course-1" },

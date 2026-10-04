@@ -12,6 +12,8 @@ vi.mock("@/lib/prisma", () => ({
 import { prisma } from "@/lib/prisma"
 import { getCourseById } from "@/lib/queries/course"
 
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+
 describe("getCourseById", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -31,7 +33,7 @@ describe("getCourseById", () => {
       updatedAt: new Date(),
     }
 
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
 
     const result = await getCourseById("course-1")
 
@@ -73,7 +75,7 @@ describe("getCourseById", () => {
       profId: "prof-1",
     }
 
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
 
     await getCourseById("course-1")
 
@@ -100,7 +102,7 @@ describe("getCourseById", () => {
       profId: "prof-1",
     }
 
-    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(mockCourse as unknown as CourseResult)
 
     const result = await getCourseById("course-1")
 

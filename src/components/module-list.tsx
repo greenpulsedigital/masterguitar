@@ -37,7 +37,7 @@ interface ModuleListProps {
   courseId: string
 }
 
-export function ModuleList({ modules, courseId }: ModuleListProps) {
+export function ModuleList({ modules }: ModuleListProps) {
   const [items, setItems] = useState(modules)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState("")

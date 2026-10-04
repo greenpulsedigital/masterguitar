@@ -14,6 +14,9 @@ vi.mock("next/navigation", () => ({
 import { getCourseBySlug } from "@/lib/queries/course"
 import CourseSalesPage, { generateMetadata } from "@/app/cours/[slug]/page"
 
+type CourseResult = Awaited<ReturnType<typeof getCourseBySlug>>
+type OpenGraphWithImages = { images?: unknown }
+
 const baseCourse = {
   id: "course-1",
   slug: "guitare-debutant",
@@ -31,7 +34,7 @@ const baseCourse = {
 const params = Promise.resolve({ slug: "guitare-debutant" })
 
 async function renderPage(course: unknown) {
-  vi.mocked(getCourseBySlug).mockResolvedValue(course as any)
+  vi.mocked(getCourseBySlug).mockResolvedValue(course as unknown as CourseResult)
   render(await CourseSalesPage({ params }))
 }
 
@@ -93,7 +96,7 @@ describe("generateMetadata", () => {
   })
 
   it("exposes title, description and Open Graph data", async () => {
-    vi.mocked(getCourseBySlug).mockResolvedValue(baseCourse as any)
+    vi.mocked(getCourseBySlug).mockResolvedValue(baseCourse as unknown as CourseResult)
 
     const metadata = await generateMetadata({ params })
 
@@ -110,7 +113,7 @@ describe("generateMetadata", () => {
     vi.mocked(getCourseBySlug).mockResolvedValue({
       ...baseCourse,
       description: "mot ".repeat(100),
-    } as any)
+    } as unknown as CourseResult)
 
     const metadata = await generateMetadata({ params })
 
@@ -123,12 +126,12 @@ describe("generateMetadata", () => {
       ...baseCourse,
       description: null,
       thumbnailUrl: null,
-    } as any)
+    } as unknown as CourseResult)
 
     const metadata = await generateMetadata({ params })
 
     expect(metadata.description).toContain("Guitare Débutant")
-    expect((metadata.openGraph as any).images).toBeUndefined()
+    expect((metadata.openGraph as unknown as OpenGraphWithImages).images).toBeUndefined()
     expect(metadata.twitter).toMatchObject({ card: "summary" })
   })
 

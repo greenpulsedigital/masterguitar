@@ -31,6 +31,13 @@ import { stripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { POST } from "@/app/api/webhooks/stripe/route"
 
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+type UserResult = Awaited<ReturnType<typeof prisma.user.findUnique>>
+type PurchaseResult = Awaited<ReturnType<typeof prisma.purchase.findUnique>>
+type PurchaseCreateResult = Awaited<ReturnType<typeof prisma.purchase.create>>
+type PaymentIssueResult = Awaited<ReturnType<typeof prisma.paymentIssue.upsert>>
+type StripeEvent = ReturnType<typeof stripe.webhooks.constructEvent>
+
 describe("Stripe Webhook Handler", () => {
   const mockSession = {
     id: "cs_test_123",
@@ -47,15 +54,15 @@ describe("Stripe Webhook Handler", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test_secret"
-    vi.mocked(prisma.course.findUnique).mockResolvedValue({ id: "course-1" } as any)
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as any)
+    vi.mocked(prisma.course.findUnique).mockResolvedValue({ id: "course-1" } as unknown as CourseResult)
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user-1" } as unknown as UserResult)
   })
 
   async function send(object: Record<string, unknown>, type = "checkout.session.completed") {
     const event = { type, data: { object } }
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as unknown as StripeEvent)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.purchase.create).mockResolvedValue({} as any)
+    vi.mocked(prisma.purchase.create).mockResolvedValue({} as unknown as PurchaseCreateResult)
 
     return POST(
       new NextRequest("http://localhost:3000/api/webhooks/stripe", {
@@ -131,10 +138,10 @@ describe("Stripe Webhook Handler", () => {
     it("treats a unique violation as a concurrent replay when the session purchase now exists", async () => {
       const event = { type: "checkout.session.completed", data: { object: mockSession } }
       const consoleError = vi.spyOn(console, "error")
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as unknown as StripeEvent)
       vi.mocked(prisma.purchase.findUnique)
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ stripeSessionId: mockSession.id } as any)
+        .mockResolvedValueOnce({ stripeSessionId: mockSession.id } as unknown as PurchaseResult)
       vi.mocked(prisma.purchase.create).mockRejectedValue(
         Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
       )
@@ -156,12 +163,12 @@ describe("Stripe Webhook Handler", () => {
     it("records and alerts a real duplicate payment when the session purchase does not exist", async () => {
       const event = { type: "checkout.session.completed", data: { object: mockSession } }
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as unknown as StripeEvent)
       vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
       vi.mocked(prisma.purchase.create).mockRejectedValue(
         Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
       )
-      vi.mocked(prisma.paymentIssue.upsert).mockResolvedValue({} as any)
+      vi.mocked(prisma.paymentIssue.upsert).mockResolvedValue({} as unknown as PaymentIssueResult)
 
       const response = await POST(
         new NextRequest("http://localhost:3000/api/webhooks/stripe", {
@@ -201,7 +208,7 @@ describe("Stripe Webhook Handler", () => {
 
     it("returns 500 when recording a real duplicate payment fails", async () => {
       const event = { type: "checkout.session.completed", data: { object: mockSession } }
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as any)
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as unknown as StripeEvent)
       vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
       vi.mocked(prisma.purchase.create).mockRejectedValue(
         Object.assign(new Error("Unique constraint failed"), { code: "P2002" })
@@ -239,7 +246,7 @@ describe("Stripe Webhook Handler", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as unknown as StripeEvent)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.purchase.create).mockResolvedValue({
       id: "purchase-1",
@@ -249,7 +256,7 @@ describe("Stripe Webhook Handler", () => {
       userId: "user-1",
       courseId: "course-1",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseCreateResult)
 
     const request = new NextRequest("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -281,7 +288,7 @@ describe("Stripe Webhook Handler", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as unknown as StripeEvent)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue({
       id: "purchase-1",
       amount: 5000,
@@ -290,7 +297,7 @@ describe("Stripe Webhook Handler", () => {
       userId: "user-1",
       courseId: "course-1",
       createdAt: new Date(),
-    } as any)
+    } as unknown as PurchaseResult)
 
     const request = new NextRequest("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -333,7 +340,7 @@ describe("Stripe Webhook Handler", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as unknown as StripeEvent)
 
     const request = new NextRequest("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -357,7 +364,7 @@ describe("Stripe Webhook Handler", () => {
       },
     }
 
-    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as any)
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(mockEvent as unknown as StripeEvent)
     vi.mocked(prisma.purchase.findUnique).mockResolvedValue(null)
     vi.mocked(prisma.purchase.create).mockRejectedValue(new Error("Database error"))
 

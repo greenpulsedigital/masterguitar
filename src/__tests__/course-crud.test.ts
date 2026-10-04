@@ -31,6 +31,12 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 
+type AuthResult = Awaited<ReturnType<typeof auth>>
+type CourseResult = Awaited<ReturnType<typeof prisma.course.findUnique>>
+type CourseCreateResult = Awaited<ReturnType<typeof prisma.course.create>>
+type CourseUpdateResult = Awaited<ReturnType<typeof prisma.course.update>>
+type CourseDeleteResult = Awaited<ReturnType<typeof prisma.course.delete>>
+
 describe("Course CRUD operations", () => {
   const mockProfSession = {
     user: {
@@ -54,7 +60,7 @@ describe("Course CRUD operations", () => {
 
   describe("Create Course", () => {
     it("should create course with valid data", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const mockCourse = {
         id: "course-1",
@@ -69,7 +75,7 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.create).mockResolvedValue(mockCourse as any)
+      vi.mocked(prisma.course.create).mockResolvedValue(mockCourse as unknown as CourseCreateResult)
 
       const formData = new FormData()
       formData.set("title", "Débuter la guitare")
@@ -100,7 +106,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when title is missing", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("title", "")
@@ -115,7 +121,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when price is negative", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("title", "Test Course")
@@ -130,7 +136,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should redirect to login if not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("title", "Test Course")
@@ -144,7 +150,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should redirect to login if user is not PROF", async () => {
-      vi.mocked(auth).mockResolvedValue(mockStudentSession as any)
+      vi.mocked(auth).mockResolvedValue(mockStudentSession as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("title", "Test Course")
@@ -160,7 +166,7 @@ describe("Course CRUD operations", () => {
 
   describe("Update Course", () => {
     it("should update course with valid data", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingCourse = {
         id: "course-1",
@@ -175,13 +181,13 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as unknown as CourseResult)
       vi.mocked(prisma.course.update).mockResolvedValue({
         ...existingCourse,
         title: "Updated Title",
         slug: generateSlug("Updated Title"),
         price: 9999,
-      } as any)
+      } as unknown as CourseUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -207,7 +213,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when user is not the owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingCourse = {
         id: "course-1",
@@ -222,7 +228,7 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as unknown as CourseResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -241,7 +247,7 @@ describe("Course CRUD operations", () => {
 
   describe("Delete Course", () => {
     it("should delete course when user is owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingCourse = {
         id: "course-1",
@@ -256,8 +262,8 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
-      vi.mocked(prisma.course.delete).mockResolvedValue(existingCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as unknown as CourseResult)
+      vi.mocked(prisma.course.delete).mockResolvedValue(existingCourse as unknown as CourseDeleteResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -274,7 +280,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when user is not the owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingCourse = {
         id: "course-1",
@@ -289,7 +295,7 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as unknown as CourseResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -306,7 +312,7 @@ describe("Course CRUD operations", () => {
 
   describe("Toggle Course Status", () => {
     it("should toggle course from DRAFT to PUBLISHED", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const draftCourse = {
         id: "course-1",
@@ -321,11 +327,11 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(draftCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(draftCourse as unknown as CourseResult)
       vi.mocked(prisma.course.update).mockResolvedValue({
         ...draftCourse,
         status: "PUBLISHED",
-      } as any)
+      } as unknown as CourseUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -341,7 +347,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should toggle course from PUBLISHED to DRAFT", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const publishedCourse = {
         id: "course-1",
@@ -356,11 +362,11 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(publishedCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(publishedCourse as unknown as CourseResult)
       vi.mocked(prisma.course.update).mockResolvedValue({
         ...publishedCourse,
         status: "DRAFT",
-      } as any)
+      } as unknown as CourseUpdateResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -376,7 +382,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when user is not authenticated", async () => {
-      vi.mocked(auth).mockResolvedValue(null as any)
+      vi.mocked(auth).mockResolvedValue(null as unknown as AuthResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -387,7 +393,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when user is not the owner", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
 
       const existingCourse = {
         id: "course-1",
@@ -402,7 +408,7 @@ describe("Course CRUD operations", () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as any)
+      vi.mocked(prisma.course.findUnique).mockResolvedValue(existingCourse as unknown as CourseResult)
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -417,7 +423,7 @@ describe("Course CRUD operations", () => {
     })
 
     it("should return error when course is not found", async () => {
-      vi.mocked(auth).mockResolvedValue(mockProfSession as any)
+      vi.mocked(auth).mockResolvedValue(mockProfSession as unknown as AuthResult)
       vi.mocked(prisma.course.findUnique).mockResolvedValue(null)
 
       const formData = new FormData()
