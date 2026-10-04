@@ -48,14 +48,17 @@ export async function checkRateLimit(
 /**
  * Contrôle combiné par utilisateur et par adresse IP. Les deux compteurs sont
  * incrémentés à chaque tentative ; il suffit qu'un seul dépasse pour refuser.
+ * La connexion et la déconnexion ont chacune leurs compteurs (`scope`).
  */
 export async function checkConnectRateLimit(params: {
   userId: string
   ip: string
+  scope?: "connect" | "disconnect"
 }): Promise<RateLimitResult> {
+  const scope = params.scope ?? "connect"
   const [byUser, byIp] = await Promise.all([
-    checkRateLimit(`connect:user:${params.userId}`, CONNECT_USER_LIMIT),
-    checkRateLimit(`connect:ip:${params.ip}`, CONNECT_IP_LIMIT),
+    checkRateLimit(`${scope}:user:${params.userId}`, CONNECT_USER_LIMIT),
+    checkRateLimit(`${scope}:ip:${params.ip}`, CONNECT_IP_LIMIT),
   ])
   return {
     allowed: byUser.allowed && byIp.allowed,

@@ -19,6 +19,7 @@ vi.mock("@/lib/prisma", () => ({
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       delete: vi.fn(),
     },
     purchase: {
@@ -328,10 +329,7 @@ describe("Course CRUD operations", () => {
       }
 
       vi.mocked(prisma.course.findUnique).mockResolvedValue(draftCourse as unknown as CourseResult)
-      vi.mocked(prisma.course.update).mockResolvedValue({
-        ...draftCourse,
-        status: "PUBLISHED",
-      } as unknown as CourseUpdateResult)
+      vi.mocked(prisma.course.updateMany).mockResolvedValue({ count: 1 })
 
       const formData = new FormData()
       formData.set("id", "course-1")
@@ -340,8 +338,13 @@ describe("Course CRUD operations", () => {
 
       await toggleCourseStatus(formData)
 
-      expect(prisma.course.update).toHaveBeenCalledWith({
-        where: { id: "course-1" },
+      // La publication exige un compte Stripe ACTIVE dans la clause WHERE de la mise à jour
+      expect(prisma.course.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: "course-1",
+          profId: "prof-test-id",
+          prof: { stripeAccount: { is: { status: "ACTIVE" } } },
+        },
         data: { status: "PUBLISHED" },
       })
     })

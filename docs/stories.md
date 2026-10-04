@@ -470,7 +470,7 @@ s07-stripe-checkout
 - [ ] Chaque secret est chiffré en AES-256-GCM avec un IV unique, un tag d'authentification et des données associées liant `profId`, mode, usage et version de clé ; toute incohérence (tag, données associées, version) fait échouer le déchiffrement, sans repli
 - [ ] Aucun secret en clair n'apparaît dans les logs, erreurs, props, cookies, URL ou résultats de Server Actions ; seuls les 4 derniers caractères et le mode (test / live) sont affichés
 - [ ] À la connexion, un endpoint webhook est créé sur le compte du prof (événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`) de façon idempotente (clé d'idempotence, réutilisation d'un endpoint identique déjà présent) ; son secret de signature est chiffré immédiatement ; si l'enregistrement échoue, l'endpoint créé est supprimé
-- [ ] La déconnexion passe par un état intermédiaire : nouveaux checkouts et publications désactivés immédiatement, endpoint supprimé côté Stripe (au mieux), secret conservé chiffré pendant une fenêtre de réconciliation documentée puis supprimé
+- [ ] La déconnexion passe par un état intermédiaire : nouveaux checkouts et publications désactivés immédiatement, endpoint, clé et secret conservés chiffrés pendant une fenêtre de réconciliation documentée (pour laisser aboutir les paiements en cours), puis endpoint supprimé côté Stripe (au mieux) et secrets effacés
 - [ ] Un prof sans compte `ACTIVE` ne peut pas publier un cours (vérification atomique dans `toggleCourseStatus`) et voit pourquoi (lien vers la page de paiement)
 - [ ] Le statut du compte (non configuré / connecté / clé invalide / déconnexion en cours) est visible dans le dashboard
 

@@ -238,7 +238,7 @@
               <h1>Paiements Stripe</h1>
               <section class="card" aria-labelledby="disconnecting-title" aria-live="polite">
                 <div class="card-header"><div class="status-row"><h2 id="disconnecting-title" class="card-title">Déconnexion en cours</h2><span class="badge">En cours</span></div></div>
-                <div class="card-content"><p class="subtle">Les nouveaux paiements et les nouvelles publications sont désactivés pendant la déconnexion. L’endpoint webhook est supprimé au mieux. La clé reste chiffrée pendant la fenêtre de réconciliation documentée, puis elle est supprimée.</p></div>
+                <div class="card-content"><p class="subtle">Les nouveaux paiements et les nouvelles publications sont désactivés pendant la déconnexion. L’endpoint webhook et la clé restent en place pendant la fenêtre de réconciliation, pour laisser aboutir les paiements en cours, puis ils sont supprimés.</p></div>
                 <div class="card-footer"><button class="button disabled" type="button" disabled>Déconnexion en cours…</button></div>
               </section>
             </div>
@@ -280,7 +280,7 @@
             <div class="dialog-backdrop">
               <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title-mobile" aria-describedby="dialog-description-mobile">
                 <div class="dialog-header"><h2 id="dialog-title-mobile">Déconnecter le compte Stripe&nbsp;?</h2></div>
-                <div class="dialog-content"><p id="dialog-description-mobile">Les nouveaux paiements et les nouvelles publications seront bloqués. L’endpoint webhook sera supprimé au mieux. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés. La clé sera supprimée après la fenêtre de réconciliation.</p></div>
+                <div class="dialog-content"><p id="dialog-description-mobile">Les nouveaux paiements et les nouvelles publications seront bloqués immédiatement. L’endpoint webhook et la clé seront supprimés à la fin de la fenêtre de réconciliation, pour laisser aboutir les paiements en cours. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés.</p></div>
                 <div class="dialog-footer"><button class="button outline" type="button">Annuler</button><button class="button destructive" type="button">Déconnecter</button></div>
               </section>
             </div>

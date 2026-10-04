@@ -104,7 +104,7 @@ Le mode n’est pas choisi dans un `Select` : il est déduit du préfixe de la c
 #### Déconnexion en cours
 
 - `CardHeader` : « Déconnexion en cours » et `Badge` secondaire « En cours ».
-- Message dans une structure HTML simple avec `aria-live="polite"` : « Les nouveaux paiements et les nouvelles publications sont désactivés pendant la déconnexion. L’endpoint webhook est supprimé au mieux. La clé reste chiffrée pendant la fenêtre de réconciliation documentée, puis elle est supprimée. »
+- Message dans une structure HTML simple avec `aria-live="polite"` : « Les nouveaux paiements et les nouvelles publications sont désactivés pendant la déconnexion. L’endpoint webhook et la clé restent en place pendant la fenêtre de réconciliation, pour laisser aboutir les paiements en cours, puis ils sont supprimés. »
 - Toutes les actions de la Card sont désactivées; aucun bouton « Annuler » n’est ajouté tant que ce comportement n’est pas défini.
 - Le statut revient à « Non configuré » après suppression effective; en cas d’échec de réconciliation, l’interface ne montre pas de détail Stripe et conserve un état récupérable à définir dans le plan.
 
@@ -124,7 +124,7 @@ Déclenché par « Déconnecter » dans l’état connecté. Il suit le pattern 
 - Mobile : `DialogContent` pleine largeur moins `2rem`, contenu empilé; les actions sont empilées dans l’ordre « Annuler » puis « Déconnecter » via le footer de la primitive.
 - Desktop : largeur native de la primitive (`sm:max-w-sm`); les actions sont alignées à droite.
 - Titre : « Déconnecter le compte Stripe ? »
-- Description : « Les nouveaux paiements et les nouvelles publications seront bloqués. L’endpoint webhook sera supprimé au mieux. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés. La clé sera supprimée après la fenêtre de réconciliation. »
+- Description : « Les nouveaux paiements et les nouvelles publications seront bloqués immédiatement. L’endpoint webhook et la clé seront supprimés à la fin de la fenêtre de réconciliation, pour laisser aboutir les paiements en cours. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés. »
 - Actions : `Button variant="outline"` « Annuler » et `Button variant="destructive"` « Déconnecter ».
 - À la confirmation : fermeture du dialog, passage immédiat à l’état « Déconnexion en cours », désactivation des nouvelles publications et checkouts côté serveur. Le focus revient au bouton déclencheur si l’action échoue.
 
