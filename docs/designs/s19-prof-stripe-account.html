@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MasterGuitar — Mockup s19 compte Stripe</title>
+  <style>
+    :root {
+      --background: #fbf6ee;
+      --foreground: #332417;
+      --card: #ffffff;
+      --card-foreground: #332417;
+      --muted: #f3ead9;
+      --muted-foreground: #7a6c56;
+      --border: #ecdfc9;
+      --primary: #a3632a;
+      --primary-foreground: #fffaf3;
+      --secondary: #f3ead9;
+      --accent: #f0dcc4;
+      --accent-foreground: #5c3a1c;
+      --destructive: #c0392b;
+      --ring: #a3632a;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --font-sans: Geist Sans, system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+    }
+    button, input { font: inherit; }
+    button, a { min-height: 44px; }
+    button:focus-visible, a:focus-visible, input:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+    .page { width: min(100% - 2rem, 1240px); margin: 0 auto; padding: 2rem 0 4rem; }
+    .page-heading { margin-bottom: 2rem; }
+    .page-heading h1 { margin: 0 0 .5rem; font-size: 2rem; line-height: 1.2; }
+    .page-heading p { margin: 0; color: var(--muted-foreground); }
+    .preview-group { margin-bottom: 3rem; }
+    .preview-group > h2 { margin: 0 0 1rem; font-size: 1.5rem; line-height: 1.25; }
+    .preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
+    .scenario { min-width: 0; }
+    .scenario-label { margin: 0 0 .5rem; color: var(--muted-foreground); font-size: .875rem; font-weight: 600; }
+    .viewport { min-height: 460px; padding: 2rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+    .viewport.mobile { max-width: 375px; }
+    .viewport.desktop { padding: 2rem; }
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 44px; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    .brand { font-weight: 700; font-size: 1.125rem; }
+    .header-link { color: var(--foreground); text-decoration: none; font-size: .875rem; }
+    .content { width: 100%; max-width: 48rem; margin: 0 auto; padding-top: 1.5rem; }
+    .content h1 { margin: 0 0 .5rem; font-size: 1.875rem; line-height: 1.2; }
+    .lead { margin: 0 0 1.5rem; color: var(--muted-foreground); }
+    .dashboard-grid { display: grid; gap: 1rem; }
+    .dashboard-card, .card { background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 8px 24px rgba(92, 58, 28, .06); }
+    .dashboard-card { padding: 1rem; }
+    .dashboard-card h2 { margin: 0 0 .25rem; font-size: 1.125rem; }
+    .dashboard-card p { margin: 0 0 1rem; color: var(--muted-foreground); font-size: .875rem; }
+    .card-header { padding: 1rem 1rem 0; }
+    .card-title { margin: 0; font-size: 1.125rem; font-weight: 600; line-height: 1.25; }
+    .card-description { margin: .35rem 0 0; color: var(--muted-foreground); font-size: .875rem; }
+    .card-content { display: flex; flex-direction: column; gap: 1rem; padding: 1rem; }
+    .card-footer { display: flex; flex-direction: column; gap: .5rem; padding: 1rem; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--muted) 55%, var(--card)); }
+    .field { display: flex; flex-direction: column; gap: .5rem; }
+    label { font-size: .875rem; font-weight: 500; }
+    input { width: 100%; min-height: 44px; padding: .625rem .75rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); color: var(--foreground); }
+    input::placeholder { color: var(--muted-foreground); }
+    .help { margin: 0; color: var(--muted-foreground); font-size: .75rem; }
+    .notice { padding: .75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--muted); color: var(--accent-foreground); font-size: .875rem; }
+    .error { padding: .75rem 1rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--destructive) 10%, var(--card)); color: var(--destructive); font-size: .875rem; }
+    .status-row, .action-row, .mode-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .status-row { justify-content: space-between; }
+    .badge { display: inline-flex; align-items: center; min-height: 28px; padding: .25rem .625rem; border-radius: var(--radius-sm); background: var(--secondary); color: var(--foreground); font-size: .75rem; font-weight: 600; }
+    .badge.primary { background: var(--primary); color: var(--primary-foreground); }
+    .badge.accent { background: var(--accent); color: var(--accent-foreground); }
+    .key-preview { margin: 0; padding: .75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .875rem; overflow-wrap: anywhere; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .625rem 1rem; border: 1px solid transparent; border-radius: var(--radius-md); color: var(--primary-foreground); background: var(--primary); font-size: .875rem; font-weight: 500; text-decoration: none; cursor: pointer; }
+    .button.outline { color: var(--foreground); background: var(--background); border-color: var(--border); }
+    .button.destructive { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, var(--card)); }
+    .button.disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+    .button.full { width: 100%; }
+    .permissions { margin: 0; padding-left: 1.25rem; font-size: .875rem; }
+    .permissions li + li { margin-top: .35rem; }
+    .subtle { margin: 0; color: var(--muted-foreground); font-size: .875rem; }
+    .page-block { max-width: 42rem; margin: 0 auto; padding-top: 1rem; }
+    .page-block h2 { margin: 0 0 1rem; font-size: 1.5rem; }
+    .dialog-backdrop { position: relative; min-height: 360px; overflow: hidden; border-radius: var(--radius-lg); background: rgba(51, 36, 23, .18); }
+    .dialog { position: absolute; top: 50%; left: 50%; width: min(calc(100% - 2rem), 24rem); transform: translate(-50%, -50%); background: var(--card); border-radius: var(--radius-lg); box-shadow: 0 16px 40px rgba(51, 36, 23, .2); }
+    .dialog-header, .dialog-content { padding: 1rem; }
+    .dialog h2 { margin: 0 0 .5rem; font-size: 1rem; }
+    .dialog p { margin: 0; color: var(--muted-foreground); font-size: .875rem; }
+    .dialog-footer { display: flex; flex-direction: column-reverse; gap: .5rem; padding: 1rem; border-top: 1px solid var(--border); background: var(--muted); }
+    .checkout-card { max-width: 42rem; margin: 0 auto; }
+    .checkout-message { margin: 0; font-size: 1.125rem; }
+    .flow-note { padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--muted); }
+    .flow-note h3 { margin: 0 0 .5rem; font-size: 1rem; }
+    .flow-note p { margin: 0; color: var(--muted-foreground); font-size: .875rem; }
+    @media (min-width: 768px) {
+      .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card-header, .card-content, .card-footer, .dashboard-card { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .card-header { padding-top: 1.5rem; }
+      .card-content, .card-footer { padding-bottom: 1.5rem; }
+      .card-footer { flex-direction: row; justify-content: flex-end; }
+      .dialog-footer { flex-direction: row; justify-content: flex-end; }
+      .button.full { width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-heading">
+      <h1>Design de référence — Connexion du compte Stripe</h1>
+      <p>Story s19-prof-stripe-account · MasterGuitar · exemples fictifs uniquement</p>
+    </header>
+
+    <section class="preview-group" aria-labelledby="dashboard-heading">
+      <h2 id="dashboard-heading">Accès depuis le dashboard</h2>
+      <div class="preview-grid">
+        <div class="scenario">
+          <p class="scenario-label">Mobile — 375 px — non configuré</p>
+          <div class="viewport mobile">
+            <div class="header"><span class="brand">MasterGuitar</span><a class="header-link" href="/dashboard">Tableau de bord</a></div>
+            <div class="content">
+              <h1>Tableau de bord</h1>
+              <p class="lead">Bienvenue, professeur</p>
+              <div class="dashboard-grid">
+                <section class="dashboard-card" aria-labelledby="dashboard-payments-title">
+                  <h2 id="dashboard-payments-title">Paiements Stripe</h2>
+                  <div class="status-row"><span class="badge">À configurer</span></div>
+                  <p>Connectez Stripe pour permettre l’achat de vos cours.</p>
+                  <a class="button full" href="/dashboard/settings/payments">Configurer les paiements</a>
+                </section>
+                <section class="dashboard-card" aria-labelledby="dashboard-courses-title">
+                  <h2 id="dashboard-courses-title">Mes cours</h2>
+                  <p>Gérez vos cours et leur contenu.</p>
+                  <a class="button outline full" href="/dashboard/courses">Voir mes cours</a>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — statut connecté</p>
+          <div class="viewport desktop">
+            <div class="header"><span class="brand">MasterGuitar</span><a class="header-link" href="/dashboard/settings/payments">Paiements</a></div>
+            <div class="content">
+              <h1>Tableau de bord</h1>
+              <p class="lead">Bienvenue, professeur</p>
+              <div class="dashboard-grid">
+                <section class="dashboard-card" aria-labelledby="dashboard-live-title">
+                  <h2 id="dashboard-live-title">Paiements Stripe</h2>
+                  <div class="mode-row"><span class="badge primary">Connecté</span><span class="badge accent">LIVE</span></div>
+                  <p>Clé enregistrée · se termine par ••••A7Q2</p>
+                  <a class="button outline" href="/dashboard/settings/payments">Gérer les paiements</a>
+                </section>
+                <section class="dashboard-card" aria-labelledby="dashboard-courses-title-desktop">
+                  <h2 id="dashboard-courses-title-desktop">Mes cours</h2>
+                  <p>Gérez vos cours et leur contenu.</p>
+                  <a class="button outline" href="/dashboard/courses">Voir mes cours</a>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-group" aria-labelledby="settings-heading">
+      <h2 id="settings-heading">Réglages des paiements</h2>
+      <div class="preview-grid">
+        <div class="scenario">
+          <p class="scenario-label">Mobile — 375 px — état non configuré</p>
+          <div class="viewport mobile">
+            <div class="header"><span class="brand">MasterGuitar</span><a class="header-link" href="/dashboard">Retour</a></div>
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <p class="lead">Configurez le compte qui recevra directement les paiements.</p>
+              <section class="card" aria-labelledby="connect-title">
+                <div class="card-header"><h2 id="connect-title" class="card-title">Connecter votre compte Stripe</h2><p class="card-description">Les paiements de vos élèves seront créés directement sur votre compte Stripe.</p></div>
+                <div class="card-content">
+                  <div class="field"><label for="restricted-key">Clé API restreinte Stripe</label><input id="restricted-key" type="password" autocomplete="off" spellcheck="false" placeholder="rk_test_••••"><p class="help">La clé ne sera jamais réaffichée après l’enregistrement.</p></div>
+                  <div class="notice"><strong>Ne collez jamais une clé secrète complète commençant par <code>sk_</code>.</strong> Une clé restreinte suffit pour ce parcours.</div>
+                  <div><p class="help"><strong>Permissions minimales à accorder</strong></p><ul class="permissions"><li>Lire le compte Stripe</li><li>Créer une session de paiement</li><li>Créer l’endpoint webhook</li></ul></div>
+                  <button class="button full" type="button">Connecter Stripe</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — état connecté</p>
+          <div class="viewport desktop">
+            <div class="header"><span class="brand">MasterGuitar</span><a class="header-link" href="/dashboard">Tableau de bord</a></div>
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <p class="lead">Configurez le compte qui recevra directement les paiements.</p>
+              <section class="card" aria-labelledby="connected-title">
+                <div class="card-header"><h2 id="connected-title" class="card-title">Compte Stripe connecté</h2><p class="card-description">La connexion est prête pour les paiements de vos élèves.</p></div>
+                <div class="card-content">
+                  <div class="status-row"><div class="mode-row"><span class="badge primary">Connecté</span><span class="badge accent">LIVE</span></div></div>
+                  <p class="key-preview">Clé enregistrée · se termine par ••••A7Q2</p>
+                  <p class="subtle">Aucune donnée personnelle de votre compte Stripe n’est affichée ici.</p>
+                </div>
+                <div class="card-footer"><button class="button destructive" type="button">Déconnecter</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Mobile — clé invalide</p>
+          <div class="viewport mobile">
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <section class="card" aria-labelledby="replace-title">
+                <div class="card-header"><h2 id="replace-title" class="card-title">Remplacer la clé Stripe</h2></div>
+                <div class="card-content">
+                  <div class="error" role="alert" aria-live="assertive">Impossible de valider cette clé Stripe. Vérifiez la clé et réessayez.</div>
+                  <div class="field"><label for="replace-key">Clé API restreinte Stripe</label><input id="replace-key" type="password" autocomplete="off" spellcheck="false" placeholder="rk_test_••••"></div>
+                  <button class="button full" type="button">Remplacer la clé</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — déconnexion en cours</p>
+          <div class="viewport desktop">
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <section class="card" aria-labelledby="disconnecting-title" aria-live="polite">
+                <div class="card-header"><div class="status-row"><h2 id="disconnecting-title" class="card-title">Déconnexion en cours</h2><span class="badge">En cours</span></div></div>
+                <div class="card-content"><p class="subtle">Les nouveaux paiements et les nouvelles publications sont désactivés pendant la déconnexion. L’endpoint webhook est supprimé au mieux. La clé reste chiffrée pendant la fenêtre de réconciliation documentée, puis elle est supprimée.</p></div>
+                <div class="card-footer"><button class="button disabled" type="button" disabled>Déconnexion en cours…</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Mobile — erreur de chargement</p>
+          <div class="viewport mobile">
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <section class="card" aria-labelledby="error-title">
+                <div class="card-header"><h2 id="error-title" class="card-title">Paiements Stripe</h2></div>
+                <div class="card-content"><div class="error" role="alert" aria-live="assertive">Impossible de charger l’état Stripe. Réessayez plus tard.</div><button class="button outline full" type="button">Réessayer</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — limitation de débit</p>
+          <div class="viewport desktop">
+            <div class="content">
+              <h1>Paiements Stripe</h1>
+              <section class="card" aria-labelledby="rate-title">
+                <div class="card-header"><h2 id="rate-title" class="card-title">Paiements Stripe</h2></div>
+                <div class="card-content"><div class="error" role="alert" aria-live="assertive">Trop de tentatives. Réessayez dans quelques instants.</div><button class="button outline" type="button">Réessayer plus tard</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-group" aria-labelledby="dialog-heading">
+      <h2 id="dialog-heading">Confirmation de déconnexion</h2>
+      <div class="preview-grid">
+        <div class="scenario">
+          <p class="scenario-label">Mobile — focus dans le dialog</p>
+          <div class="viewport mobile">
+            <div class="dialog-backdrop">
+              <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title-mobile" aria-describedby="dialog-description-mobile">
+                <div class="dialog-header"><h2 id="dialog-title-mobile">Déconnecter le compte Stripe&nbsp;?</h2></div>
+                <div class="dialog-content"><p id="dialog-description-mobile">Les nouveaux paiements et les nouvelles publications seront bloqués. L’endpoint webhook sera supprimé au mieux. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés. La clé sera supprimée après la fenêtre de réconciliation.</p></div>
+                <div class="dialog-footer"><button class="button outline" type="button">Annuler</button><button class="button destructive" type="button">Déconnecter</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — mêmes conséquences</p>
+          <div class="viewport desktop">
+            <div class="dialog-backdrop">
+              <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title-desktop" aria-describedby="dialog-description-desktop">
+                <div class="dialog-header"><h2 id="dialog-title-desktop">Déconnecter le compte Stripe&nbsp;?</h2></div>
+                <div class="dialog-content"><p id="dialog-description-desktop">Les nouveaux paiements et les nouvelles publications seront bloqués. L’endpoint webhook sera supprimé au mieux. Les paiements déjà confirmés et l’accès des élèves ne sont pas supprimés.</p></div>
+                <div class="dialog-footer"><button class="button outline" type="button">Annuler</button><button class="button destructive" type="button">Déconnecter</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-group" aria-labelledby="publication-heading">
+      <h2 id="publication-heading">Publication bloquée et checkout indisponible</h2>
+      <div class="preview-grid">
+        <div class="scenario">
+          <p class="scenario-label">Mobile — édition de cours — compte absent</p>
+          <div class="viewport mobile">
+            <div class="content">
+              <h1>Modifier le cours</h1>
+              <p class="subtle" style="margin-bottom: 1rem;">Guitare Débutant <span class="badge">DRAFT</span></p>
+              <div class="error" role="alert"><strong>Publication indisponible :</strong> connectez un compte Stripe actif pour permettre l’achat de ce cours. <a href="/dashboard/settings/payments" style="color: inherit; font-weight: 600;">Configurer les paiements</a></div>
+              <div class="action-row" style="margin-top: 1rem;"><button class="button disabled" type="button" disabled>Publier</button><button class="button destructive" type="button">Supprimer</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="scenario">
+          <p class="scenario-label">Desktop — checkout élève — vente indisponible</p>
+          <div class="viewport desktop">
+            <div class="checkout-card">
+              <section class="card" aria-labelledby="unavailable-title">
+                <div class="card-header"><h2 id="unavailable-title" class="card-title">Vente indisponible</h2></div>
+                <div class="card-content"><p class="checkout-message">La vente de ce cours est indisponible pour le moment. Réessayez plus tard.</p><a class="button" href="/cours/guitare-debutant">Retour au cours</a></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-group" aria-labelledby="notes-heading">
+      <h2 id="notes-heading">Notes de sécurité visibles dans le design</h2>
+      <div class="flow-note">
+        <h3>Secret jamais réaffiché</h3>
+        <p>Le formulaire utilise un champ password avec autocomplete désactivé. Après connexion, seule une forme fictive des quatre derniers caractères et le mode TEST/LIVE apparaissent. Aucun email, nom d’entreprise, identifiant de compte ou détail d’erreur Stripe n’est présent dans les écrans.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
