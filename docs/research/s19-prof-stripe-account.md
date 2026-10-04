@@ -89,6 +89,8 @@ Le mapping fonctionnel minimal est certain au niveau des opérations utilisées 
 
 Avec une clé restreinte de test dédiée et sans la committer : créer une Checkout Session de test, la relire, lire le compte, créer un endpoint webhook de test, relire son identifiant, le supprimer, puis vérifier les refus obtenus après retrait de chaque permission. Conserver les noms exacts des permissions et les résultats dans le plan ou un ADR ; ne pas les déduire d’un exemple de code.
 
+Le script `scripts/check-stripe-restricted-key.sh` exécute ces appels avec une clé `rk_test_...` (il refuse les clés live et les clés secrètes complètes, masque les clés dans sa sortie et supprime l'endpoint de test). Usage : `read -rs STRIPE_RK; export STRIPE_RK; bash scripts/check-stripe-restricted-key.sh`. Pour trouver l'ensemble minimal, retirer les permissions une par une de la clé et relancer.
+
 **À VÉRIFIER :** confirmer aussi si le secret de signature est renvoyé une seule fois par la création de l’endpoint. Le code doit le chiffrer immédiatement et considérer toute réponse ultérieure sans secret comme une erreur de provisioning, sans journaliser la réponse sensible.
 
 ## Local development
