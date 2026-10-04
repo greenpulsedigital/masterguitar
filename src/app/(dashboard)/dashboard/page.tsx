@@ -4,12 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
 import { BookOpen } from "lucide-react"
+import { getProfStripeStatus, type ProfStripeStatus } from "@/lib/prof-stripe-account"
+import { StripeStatusCard } from "@/components/stripe-status-card"
 
 export default async function DashboardPage() {
   const session = await auth()
 
   if (!session) {
     redirect("/login")
+  }
+
+  // Lecture du statut Stripe : une erreur ne doit pas casser le tableau de bord
+  let stripeStatus: ProfStripeStatus | null = null
+  try {
+    stripeStatus = await getProfStripeStatus(session.user.id)
+  } catch (error) {
+    const code = (error as { code?: unknown })?.code
+    console.error("stripe status unavailable on dashboard", typeof code === "string" ? code : undefined)
   }
 
   return (
@@ -20,6 +31,7 @@ export default async function DashboardPage() {
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StripeStatusCard status={stripeStatus} />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import { CourseForm } from "@/components/course-form"
 import { ModuleSection } from "@/components/module-section"
+import { PublishBlockedNotice } from "@/components/publish-blocked-notice"
+import { getProfStripeStatus, type ProfStripeStatus } from "@/lib/prof-stripe-account"
 import { updateCourse, deleteCourse, toggleCourseStatus } from "../actions"
 import {
   Dialog,
@@ -52,6 +54,18 @@ export default async function EditCoursePage({
     redirect("/dashboard/courses")
   }
 
+  // Un brouillon ne peut être publié qu'avec un compte Stripe actif. Le serveur reste l'autorité :
+  // si le statut est illisible, on n'affirme rien et le bouton reste actif.
+  let stripeStatus: ProfStripeStatus | null = null
+  try {
+    stripeStatus = await getProfStripeStatus(session.user.id)
+  } catch (error) {
+    const code = (error as { code?: unknown })?.code
+    console.error("stripe status unavailable on course page", typeof code === "string" ? code : undefined)
+  }
+  const publishBlocked =
+    course.status === "DRAFT" && stripeStatus !== null && stripeStatus.status !== "ACTIVE"
+
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-2xl">
       <div className="flex justify-between items-center mb-6">
@@ -62,10 +76,15 @@ export default async function EditCoursePage({
           </Badge>
         </div>
         <div className="flex items-center gap-2">
-          <PublishButton courseId={course.id} currentStatus={course.status} />
+          <PublishButton
+            courseId={course.id}
+            currentStatus={course.status}
+            disabled={publishBlocked}
+          />
           <DeleteCourseDialog courseId={course.id} courseTitle={course.title} />
         </div>
       </div>
+      {publishBlocked && <PublishBlockedNotice />}
       <div className="space-y-6">
         <CourseForm course={course} action={updateCourse} />
         <ModuleSection modules={course.modules} courseId={course.id} />
@@ -77,9 +96,11 @@ export default async function EditCoursePage({
 function PublishButton({
   courseId,
   currentStatus,
+  disabled = false,
 }: {
   courseId: string
   currentStatus: string
+  disabled?: boolean
 }) {
   async function handleToggle() {
     "use server"
@@ -94,6 +115,7 @@ function PublishButton({
         type="submit"
         variant={currentStatus === "PUBLISHED" ? "outline" : "default"}
         size="sm"
+        disabled={disabled}
       >
         {currentStatus === "PUBLISHED" ? "Dépublier" : "Publier"}
       </Button>

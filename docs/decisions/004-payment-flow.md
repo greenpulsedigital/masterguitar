@@ -49,3 +49,4 @@ Deux modes de vente :
 - L'accès est vérifié via `Purchase` (one-shot) ou `Subscription.status === ACTIVE` (abo).
 - Les remboursements sont gérés manuellement dans Stripe Dashboard pour le MVP.
 - Les doubles paiements sont enregistrés dans `PaymentIssue` et alertés par log ; le remboursement est effectué manuellement dans Stripe Dashboard, puis l'issue passe au statut `RESOLVED`.
+- **Déconnexion d'un compte Stripe de prof (s19)** : elle bloque tout de suite les nouveaux checkouts et publications, mais l'endpoint webhook, la clé et le secret restent chiffrés pendant une fenêtre de réconciliation (72 h proposées) pour traiter les événements en vol. À la fin de la fenêtre, l'endpoint est supprimé chez Stripe (au mieux) et les secrets effacés. Supprimer l'endpoint dès la déconnexion rendrait la conservation du secret inutile, puisqu'il ne recevrait plus d'événements.

@@ -105,6 +105,14 @@ describe("rate-limit", () => {
       expect((await checkConnectRateLimit({ userId: "someone-new", ip: "2.2.2.2" })).allowed).toBe(false)
     })
 
+    it("counts connect and disconnect attempts separately", async () => {
+      for (let i = 0; i < CONNECT_USER_LIMIT.max + 1; i++) {
+        await checkConnectRateLimit({ userId: "u1", ip: "5.5.5.5" })
+      }
+      const disconnect = await checkConnectRateLimit({ userId: "u1", ip: "5.5.5.5", scope: "disconnect" })
+      expect(disconnect.allowed).toBe(true)
+    })
+
     it("does not let another user and IP be affected", async () => {
       for (let i = 0; i < CONNECT_USER_LIMIT.max + 1; i++) {
         await checkConnectRateLimit({ userId: "u1", ip: "3.3.3.3" })

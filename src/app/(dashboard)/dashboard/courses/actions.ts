@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { generateUniqueSlug } from "@/lib/course-slug"
+import { PUBLISH_BLOCKED_MESSAGE } from "@/lib/payments-messages"
 import { redirect } from "next/navigation"
 import { z } from "zod"
 
@@ -617,10 +618,27 @@ export async function toggleCourseStatus(formData: FormData) {
   const newStatus = existingCourse.status === "DRAFT" ? "PUBLISHED" : "DRAFT"
 
   try {
-    await prisma.course.update({
-      where: { id },
-      data: { status: newStatus },
-    })
+    if (newStatus === "PUBLISHED") {
+      // Publication : le compte Stripe ACTIVE du prof est vérifié dans la clause WHERE de la mise
+      // à jour elle-même, donc dans la même requête (pas de fenêtre entre le contrôle et l'écriture).
+      const { count } = await prisma.course.updateMany({
+        where: {
+          id,
+          profId: session.user.id,
+          prof: { stripeAccount: { is: { status: "ACTIVE" } } },
+        },
+        data: { status: "PUBLISHED" },
+      })
+      if (count === 0) {
+        return { error: PUBLISH_BLOCKED_MESSAGE }
+      }
+    } else {
+      // Dépublier reste toujours permis, même sans compte Stripe
+      await prisma.course.update({
+        where: { id },
+        data: { status: newStatus },
+      })
+    }
   } catch {
     return { error: "Erreur lors du changement de statut du cours" }
   }
