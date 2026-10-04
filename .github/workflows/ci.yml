@@ -47,12 +47,9 @@ jobs:
         run: npm run build
 
   lint:
-    name: Lint (non-blocking)
+    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # The codebase still has ~235 ESLint errors (mostly `any` in tests): report them without failing the PR.
-    # Remove continue-on-error once they are cleaned up.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
