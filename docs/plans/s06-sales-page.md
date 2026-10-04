@@ -119,4 +119,4 @@ Branch: `feature/s06-sales-page`
 - [x] No regression on existing tests (course CRUD, modules)
 - [x] TypeScript compiles without errors
 - [x] Build passes (`npm run build`)
-- [ ] Review passed (no critical issues)
+- [x] Review passed (no critical issues) — `docs/reviews/s06-sales-page.md` : Max severity minor, Ship allowed: yes
