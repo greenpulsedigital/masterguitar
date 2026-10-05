@@ -22,6 +22,9 @@ describe("StripeAccountCard", () => {
       expect(screen.getByText("Lire le compte Stripe")).toBeInTheDocument()
       expect(screen.getByText("Créer une session de paiement")).toBeInTheDocument()
       expect(screen.getByText(/créer et gérer l.endpoint webhook/i)).toBeInTheDocument()
+      for (const scope of ["connected_account_read", "checkout_session_write", "webhook_write"]) {
+        expect(screen.getByText(scope)).toBeInTheDocument()
+      }
     })
 
     it("does not show an error before any attempt", () => {

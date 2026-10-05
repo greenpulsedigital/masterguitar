@@ -5,13 +5,14 @@ import { StripeDisconnectDialog } from "@/components/stripe-disconnect-dialog"
 import { CONNECT_ERRORS } from "@/lib/payments-messages"
 import type { ProfStripeStatus } from "@/lib/prof-stripe-account"
 
-// Permissions à accorder à la clé restreinte. Liste PROVISOIRE : seules ces trois sont confirmées
-// (plan s19, prérequis P1) ; la lecture et la suppression d'un endpoint avec une clé restreinte
-// restent à établir avant de figer ce texte.
+// Permissions à accorder à la clé restreinte : ensemble minimal établi par un test réel
+// (plan s19, prérequis P1 levé le 2026-10-05, script scripts/check-stripe-restricted-key.sh).
+// `webhook_write` couvre aussi la relecture, le listage et la suppression des endpoints, et
+// `checkout_session_write` la relecture des sessions.
 const REQUIRED_PERMISSIONS = [
-  "Lire le compte Stripe",
-  "Créer une session de paiement",
-  "Créer et gérer l’endpoint webhook",
+  { label: "Lire le compte Stripe", scope: "connected_account_read" },
+  { label: "Créer une session de paiement", scope: "checkout_session_write" },
+  { label: "Créer et gérer l’endpoint webhook", scope: "webhook_write" },
 ]
 
 function PermissionsList() {
@@ -19,13 +20,15 @@ function PermissionsList() {
     <div className="space-y-2">
       <h3 className="text-sm font-medium">Permissions minimales à accorder</h3>
       <ul className="list-disc space-y-1 pl-5 text-sm">
-        {REQUIRED_PERMISSIONS.map((permission) => (
-          <li key={permission}>{permission}</li>
+        {REQUIRED_PERMISSIONS.map(({ label, scope }) => (
+          <li key={scope}>
+            <span>{label}</span> <code className="text-xs text-muted-foreground">{scope}</code>
+          </li>
         ))}
       </ul>
       <p className="text-sm text-muted-foreground">
         Ces permissions permettent de vérifier le compte, de créer les paiements et de recevoir
-        leur confirmation.
+        leur confirmation. Laissez toutes les autres sur « Aucun ».
       </p>
     </div>
   )

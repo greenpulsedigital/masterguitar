@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import Stripe from "stripe"
 import { prisma } from "@/lib/prisma"
 import { getBaseUrl } from "@/lib/app-url"
@@ -38,6 +39,7 @@ export interface StripeClientLike {
       options?: { idempotencyKey?: string }
     ): Promise<{ id: string; secret?: string | null }>
     del(id: string): Promise<unknown>
+    list(params: { limit: number }): Promise<{ data: { id: string; url: string }[] }>
   }
 }
 
@@ -147,13 +149,27 @@ export async function connectAccount(
     return { ok: false, reason: "ERROR" }
   }
 
-  // Clé d'idempotence stable : un nouvel essai ne crée pas un second endpoint
-  // (Stripe conserve les clés d'idempotence 24 h : À VÉRIFIER dans sa documentation).
+  // Un endpoint déjà présent à cette URL (essai précédent, ancienne clé du même compte) ne peut
+  // pas être réutilisé : Stripe ne renvoie son secret de signature qu'à la création. On le supprime
+  // (au mieux) avant d'en créer un neuf. Stripe limite un compte à 16 endpoints : une page suffit.
+  let leftovers: string[]
+  try {
+    const { data } = await stripe.webhookEndpoints.list({ limit: 100 })
+    leftovers = data.filter((existingEndpoint) => existingEndpoint.url === url).map(({ id }) => id)
+  } catch (error) {
+    safeLog("stripe webhook endpoint listing failed", error)
+    return { ok: false, reason: "REFUSED" }
+  }
+  for (const id of leftovers) await bestEffortDeleteEndpoint(stripe, id)
+
+  // Clé d'idempotence propre à chaque essai : une clé stable ferait renvoyer par Stripe, pendant
+  // 24 h, la réponse mise en cache d'un endpoint supprimé entre-temps (échec d'enregistrement).
+  // Les doublons d'un essai interrompu sont supprimés par le nettoyage ci-dessus.
   let endpoint: { id: string; secret?: string | null }
   try {
     endpoint = await stripe.webhookEndpoints.create(
       { url, enabled_events: [...WEBHOOK_EVENTS] },
-      { idempotencyKey: `webhook:${profId}:${parsed.mode}:${stripeAccountId}` }
+      { idempotencyKey: `webhook:${profId}:${parsed.mode}:${stripeAccountId}:${randomUUID()}` }
     )
   } catch (error) {
     safeLog("stripe webhook endpoint creation failed", error)

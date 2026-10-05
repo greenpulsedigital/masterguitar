@@ -82,17 +82,19 @@ function fakeStripe(overrides: Partial<{
   retrieve: ReturnType<typeof vi.fn>
   create: ReturnType<typeof vi.fn>
   del: ReturnType<typeof vi.fn>
+  list: ReturnType<typeof vi.fn>
 }> = {}) {
   const retrieve = overrides.retrieve ?? vi.fn().mockResolvedValue({ id: "acct_FAKE0001" })
   const create =
     overrides.create ?? vi.fn().mockResolvedValue({ id: "we_FAKE0001", secret: WEBHOOK_SECRET })
   const del = overrides.del ?? vi.fn().mockResolvedValue({ deleted: true })
+  const list = overrides.list ?? vi.fn().mockResolvedValue({ data: [] })
   const client = {
     accounts: { retrieve },
-    webhookEndpoints: { create, del },
+    webhookEndpoints: { create, del, list },
   } as unknown as StripeClientLike
   const createClient = vi.fn<StripeClientFactory>(() => client)
-  return { client, retrieve, create, del, createClient }
+  return { client, retrieve, create, del, list, createClient }
 }
 
 describe("parseRestrictedKey", () => {
@@ -183,7 +185,73 @@ describe("prof stripe account service", () => {
       const [params, options] = stripe.create.mock.calls[0]
       expect(params.url).toBe("http://localhost:3000/api/webhooks/stripe/prof-1")
       expect(params.enabled_events).toEqual([...WEBHOOK_EVENTS])
-      expect(options.idempotencyKey).toBe("webhook:prof-1:TEST:acct_FAKE0001")
+      expect(options.idempotencyKey).toMatch(/^webhook:prof-1:TEST:acct_FAKE0001:[0-9a-f-]{36}$/)
+    })
+
+    it("uses a fresh idempotency key on each attempt", async () => {
+      // Une clé stable ferait renvoyer par Stripe, pendant 24 h, un endpoint déjà supprimé
+      const stripe = fakeStripe()
+      db.failWrite = new Error("db down")
+      await connectAccount({ profId: "prof-1", rawKey: RAW_KEY }, { createClient: stripe.createClient })
+      db.failWrite = null
+      await connectAccount({ profId: "prof-1", rawKey: RAW_KEY }, { createClient: stripe.createClient })
+
+      const [first, second] = stripe.create.mock.calls.map(([, options]) => options.idempotencyKey)
+      expect(first).not.toBe(second)
+    })
+
+    it("removes leftover endpoints with the same URL before creating a new one", async () => {
+      // Le secret n'est donné qu'à la création : un endpoint existant ne peut pas être réutilisé
+      const url = "http://localhost:3000/api/webhooks/stripe/prof-1"
+      const stripe = fakeStripe({
+        list: vi.fn().mockResolvedValue({
+          data: [
+            { id: "we_OLD0001", url },
+            { id: "we_OTHER01", url: "https://shop.example.com/hooks" },
+            { id: "we_OLD0002", url },
+          ],
+        }),
+      })
+
+      const result = await connectAccount(
+        { profId: "prof-1", rawKey: RAW_KEY },
+        { createClient: stripe.createClient }
+      )
+
+      expect(result.ok).toBe(true)
+      expect(stripe.list).toHaveBeenCalledWith({ limit: 100 })
+      expect(stripe.del.mock.calls.map(([id]) => id)).toEqual(["we_OLD0001", "we_OLD0002"])
+      expect(stripe.del.mock.invocationCallOrder[1]).toBeLessThan(stripe.create.mock.invocationCallOrder[0])
+      expect(db.rows.get("prof-1")!.webhookEndpointId).toBe("we_FAKE0001")
+    })
+
+    it("still connects when a leftover endpoint cannot be removed", async () => {
+      const stripe = fakeStripe({
+        list: vi.fn().mockResolvedValue({
+          data: [{ id: "we_OLD0001", url: "http://localhost:3000/api/webhooks/stripe/prof-1" }],
+        }),
+        del: vi.fn().mockRejectedValue(new Error("cannot delete")),
+      })
+
+      const result = await connectAccount(
+        { profId: "prof-1", rawKey: RAW_KEY },
+        { createClient: stripe.createClient }
+      )
+
+      expect(result.ok).toBe(true)
+    })
+
+    it("refuses the key and creates nothing when the endpoints cannot be listed", async () => {
+      const stripe = fakeStripe({ list: vi.fn().mockRejectedValue(new Error("permission")) })
+
+      const result = await connectAccount(
+        { profId: "prof-1", rawKey: RAW_KEY },
+        { createClient: stripe.createClient }
+      )
+
+      expect(result).toEqual({ ok: false, reason: "REFUSED" })
+      expect(stripe.create).not.toHaveBeenCalled()
+      expect(db.rows.size).toBe(0)
     })
 
     it("stores the account with encrypted secrets only", async () => {

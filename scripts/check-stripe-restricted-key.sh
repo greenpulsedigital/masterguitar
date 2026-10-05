@@ -88,7 +88,17 @@ PY
   fi
 else echo "[SKIP] pas d'endpoint créé à l'étape 4"; fi
 
-echo "== 6. Supprimer l'endpoint (DELETE /v1/webhook_endpoints/{id})"
+echo "== 6. Lister les endpoints (GET /v1/webhook_endpoints)"
+if call "lister les endpoints webhook" GET "/webhook_endpoints?limit=100"; then
+  python3 - "$TMP" "$WH_ID" <<'PY2'
+import json,sys
+d=json.load(open(sys.argv[1])); ids=[e.get("id") for e in d.get("data",[])]
+print("        endpoints listés :", len(ids), "| endpoint de l'étape 4 présent :", (sys.argv[2] in ids) if sys.argv[2] else "sans objet")
+print("        secret présent dans la liste :", "OUI (inattendu)" if any(e.get("secret") for e in d.get("data",[])) else "NON (conforme)")
+PY2
+fi
+
+echo "== 7. Supprimer l'endpoint (DELETE /v1/webhook_endpoints/{id})"
 if [ -n "$WH_ID" ]; then
   if call "supprimer l'endpoint webhook" DELETE "/webhook_endpoints/$WH_ID"; then WH_ID=""; fi
 else echo "[SKIP] pas d'endpoint à supprimer"; fi
