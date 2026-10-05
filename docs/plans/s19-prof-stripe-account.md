@@ -27,7 +27,7 @@ Sources : `docs/stories.md` (s19, s20), `docs/research/s19-prof-stripe-account.m
 
 | # | Sujet | État | Effet sur le plan |
 |---|-------|------|-------------------|
-| P1 | **Ensemble minimal de permissions d'une clé restreinte** (lecture/suppression d'un endpoint, relecture d'une session) | **Non établi.** Confirmés : `connected_account_read`, `checkout_session_write`, `webhook_write`. Test reporté (script : `scripts/check-stripe-restricted-key.sh`). | Bloque la tâche 6 (gestion du webhook) et le texte de la liste de permissions de la tâche 8. Les tâches 1 à 5 peuvent démarrer. Si une opération webhook est refusée avec une clé restreinte : arrêter, écrire un ADR qui remplace le n° 004, bascule vers Connect Standard OAuth (la fiche interdit de contourner avec une clé complète). |
+| P1 | **Ensemble minimal de permissions d'une clé restreinte** (lecture/suppression d'un endpoint, relecture d'une session) | **Levé le 2026-10-05** (test réel avec une clé restreinte de test, `scripts/check-stripe-restricted-key.sh`). Ensemble minimal : `connected_account_read` (lecture du compte, 403 sans elle), `checkout_session_write` (création **et** relecture d'une session), `webhook_write` (création, relecture, listage **et** suppression d'un endpoint ; le secret `whsec_` n'est renvoyé qu'à la création). | Pas de bascule vers Connect : ADR 004 maintenu. Tâche 6 débloquée, liste de la tâche 8 figée sur ces trois permissions. |
 | P2 | **Durée de la fenêtre de réconciliation** | **Proposition : 72 h**, constante `DISCONNECT_RECONCILIATION_HOURS`. À confirmer, notamment la durée de reprise des livraisons de webhook par Stripe (**À VÉRIFIER** dans la doc Stripe). | Une seule constante à changer. |
 | P3 | **Hébergeur** | Non choisi. | La clé de chiffrement vit dans une variable d'environnement (MVP) ; le stockage définitif est repoussé (voir « Hors périmètre »). |
 | P4 | **Clés test / live par environnement** | **Proposition** : production = clés `rk_live_` uniquement ; hors production = clés `rk_test_` uniquement. | Contrôle local avant tout appel Stripe, message générique identique. |
@@ -77,11 +77,11 @@ Chaque tâche : tests d'abord, puis code, puis `npx tsc --noEmit`, `npm run lint
 - `startDisconnect(profId)` : statut `DISCONNECTING`, `reconcileUntil = now + DISCONNECT_RECONCILIATION_HOURS`. `purgeExpiredDisconnections()` : pour chaque compte échu, suppression de l'endpoint (au mieux, erreur journalisée sans secret), effacement et suppression de la ligne.
 - **Tests (Stripe mocké)** : clé valide, clé `sk_` / live en dev / test en prod refusées, erreur Stripe quelconque (401, 403, 429, réseau) = même refus, compte déjà lié à un autre prof refusé, échec d'enregistrement supprime l'endpoint, connexion refusée en `ACTIVE` / `DISCONNECTING` et permise en `INVALID`, déconnexion puis purge avant / après l'échéance, aucune valeur de clé dans les erreurs ni dans les appels à `console`.
 
-### 6. [ ] Endpoint webhook du prof — dans `prof-stripe-account.ts` **(bloquée par P1)**
-> **État** : la création de l'endpoint (paramètres, clé d'idempotence, chiffrement immédiat du secret, erreur si le secret est absent, nettoyage si l'enregistrement échoue) et la suppression au mieux (remplacement de clé, fin de fenêtre) sont **faites dans la tâche 5** et testées. Restent, **bloquées par P1** : la réutilisation d'un endpoint déjà existant (lecture/liste) et le comportement exact si une clé restreinte ne peut pas supprimer un endpoint.
+### 6. [x] Endpoint webhook du prof — dans `prof-stripe-account.ts`
+> **État** : création, chiffrement du secret et suppression au mieux faits dans la tâche 5. Complété après P1 : avant la création, les endpoints du compte sont listés et ceux qui ont **la même URL** sont supprimés (au mieux) ; un endpoint existant n'est **pas réutilisable**, car son secret n'est renvoyé qu'à la création. Un échec du listage = refus générique (`REFUSED`), rien n'est créé. La clé d'idempotence devient **propre à chaque essai** (`webhook:<profId>:<mode>:<acct>:<uuid>`) : une clé stable faisait renvoyer par Stripe, pendant 24 h, un endpoint déjà supprimé après un échec d'enregistrement ; les doublons d'un essai interrompu sont supprimés par ce nettoyage. Une clé restreinte avec `webhook_write` peut supprimer : la suppression reste « au mieux » pour les clés révoquées.
 - Création : `webhookEndpoints.create` avec `url = <getBaseUrl()>/api/webhooks/stripe/<profId>`, événements `checkout.session.completed` et `checkout.session.async_payment_succeeded`, clé d'idempotence stable `webhook:<profId>:<mode>`. Le `secret` n'est renvoyé qu'à la création : le chiffrer immédiatement, ne jamais le journaliser, et traiter une réponse sans secret comme une erreur de provisioning.
-- Réutilisation d'un endpoint identique existant, suppression : **opérations de lecture et de suppression soumises à P1**. Si une clé restreinte ne peut pas les faire, le comportement (message générique, nettoyage manuel documenté) est décidé avec le résultat de P1 avant d'écrire cette tâche.
-- **Tests (Stripe mocké)** : paramètres exacts de création, secret chiffré avant tout autre traitement, réponse sans secret = erreur, retry n'ouvre pas un second endpoint.
+- Endpoint existant à la même URL : listé puis supprimé avant la création (voir État).
+- **Tests (Stripe mocké)** : paramètres exacts de création, secret chiffré avant tout autre traitement, réponse sans secret = erreur, clé d'idempotence différente à chaque essai, endpoints restants à la même URL supprimés avant la création (et pas les autres), échec de suppression non bloquant, échec du listage = refus sans création.
 
 ### 7. [x] Server Actions — `src/app/(dashboard)/dashboard/settings/payments/actions.ts`
 - `connectStripeAccount(formData)` et `disconnectStripeAccount()` : `requireProf()`, limitation de débit, Zod, appels au service ; `redirect()` **après** le `try/catch` ; retours limités à `{ error: <message générique> }` (jamais la clé, jamais un message Stripe) ; `revalidatePath` du dashboard et de la page de réglages.
@@ -109,7 +109,7 @@ Chaque tâche : tests d'abord, puis code, puis `npx tsc --noEmit`, `npm run lint
 - Documenter dans l'ADR 004 la décision n° 1 (fin de fenêtre) et aligner la story s19 et le design (dialog de déconnexion).
 
 ### 12. [ ] Vérification finale
-> **État** : les vérifications automatiques sont faites (`tsc`, lint à 0 erreur, 404 tests, build, balayage des secrets). Reste la **vérification manuelle avec un compte Stripe de test** (non automatisable) et la revue ; elle dépend de P1 pour la liste de permissions et du déploiement conjoint avec s20 (P5).
+> **État** : les vérifications automatiques sont faites (`tsc`, lint à 0 erreur, 404 tests, build, balayage des secrets). Reste la **vérification manuelle avec un compte Stripe de test** (non automatisable) et la revue ; la liste de permissions est figée (P1 levé), reste la dépendance au déploiement conjoint avec s20 (P5).
 - `npx tsc --noEmit`, `npm run lint` (0 erreur), `npx vitest run`, `npm run build`.
 - Recherche de secrets dans le diff (motifs `rk_`, `sk_`, `whsec_`, `acct_`).
 - **Vérification manuelle** avec un compte Stripe de test (non automatisable, à consigner dans la revue) : connexion avec une clé restreinte, endpoint visible dans Stripe, déconnexion puis purge, rejet d'une clé `sk_`, clé refusée = même message, publication bloquée sans compte.
@@ -136,7 +136,7 @@ Chaque tâche : tests d'abord, puis code, puis `npx tsc --noEmit`, `npm run lint
 
 ## Definition of Done
 
-- [ ] P1 levé (ensemble minimal de permissions établi) ou ADR de remplacement écrit ; P2, P4 et P5 confirmés
+- [ ] P1 levé (ensemble minimal de permissions établi) ou ADR de remplacement écrit ; P2, P4 et P5 confirmés — P1 levé le 2026-10-05 ; P2, P4, P5 à confirmer
 - [ ] Les 12 tâches sont terminées et cochées
 - [ ] Tous les critères d'acceptation sont vérifiés
 - [ ] `tsc`, lint, tests et build passent en CI
