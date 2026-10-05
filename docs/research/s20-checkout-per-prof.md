@@ -89,3 +89,12 @@ Convention suivie de bout en bout (checkout → webhook → page) : Server Actio
 8. **Test manuel** : la tâche 12 de s19 n'a pas pu valider une connexion réelle (clé restreinte sans lecture du compte). s20 aura besoin d'un compte prof connecté en test **et** d'une URL publique (tunnel) pour recevoir les webhooks : Stripe refuse les endpoints vers `localhost`.
 
 Research ready in docs/research/s20-checkout-per-prof.md. Next step: /ks-design s20-checkout-per-prof (UI story) or /ks-plan s20-checkout-per-prof
+
+## Réponses de l'utilisateur (2026-10-05)
+
+1. Compte Stripe de la plateforme : **seulement des paiements de test** → supprimer `/api/webhooks/stripe` ; prévenir dans la PR qu'il faut retirer l'endpoint de la plateforme du dashboard Stripe.
+2. Intention de checkout persistée : **oui** (ADR 008).
+5. 403 au checkout : **marquer le compte `INVALID`**, comme pour un 401.
+7. Design : **réutiliser les écrans s07** (seuls les textes changent), pas de `/ks-design s20`.
+
+Les questions 3, 4, 6 et 8 sont tranchées dans le plan.
