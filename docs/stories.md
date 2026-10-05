@@ -333,6 +333,8 @@ s07-stripe-checkout, s20-checkout-per-prof
 
 ## Story s14-tablature — Affichage tablatures
 
+> **Abandonnée le 2026-10-05** : les tablatures intégrées sont retirées du périmètre (voir `docs/prd.md`, « Explicitly NOT replicated »). Story conservée pour l'historique ; ne pas la planifier.
+
 **As a** élève **I want** voir les tablatures associées à une leçon **so that** je peux lire les notes en même temps que la vidéo.
 
 ### Complexity
