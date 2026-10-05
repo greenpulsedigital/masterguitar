@@ -58,7 +58,7 @@ However, this is a common and accepted pattern for the very first story in a gre
 | s11 | Yes - speed slider, A-B loop, mobile controls | OK |
 | s12 | Yes - display stats, list sales | OK |
 | s13 | Yes - configure subscription, subscribe, revoke, dashboard display | OK |
-| s14 | Yes - upload tab, display, zoom/scroll, mobile | OK |
+| s14 | Yes - upload tab, display, zoom/scroll, mobile | OK (story abandonnée le 2026-10-05) |
 | s15 | Yes - post message, display author/date, reply/delete, notifications | OK |
 | s16 | Yes - enable affiliation, set %, generate link, track, dashboard | OK |
 | s17 | Yes - create bundle, set price, page, access granted | OK |
@@ -98,7 +98,7 @@ s01-project-foundation (none)
        └─ s03-course-crud (s02)
             ├─ s04-course-structure (s03)
             │    └─ s05-video-lessons (s04)
-            │         ├─ s14-tablature (s05)
+            │         ├─ s14-tablature (s05) — abandonnée
             │         └─ s09-course-player (s05, s08)
             │              ├─ s10-progress-tracking (s09)
             │              └─ s11-guitar-tools (s09)

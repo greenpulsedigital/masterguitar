@@ -153,7 +153,6 @@ model Lesson {
   title       String
   description String?
   videoUrl    String?
-  tabUrl      String?  // PDF or image URL for tablature
   order       Int
   moduleId    String
   module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -277,12 +276,6 @@ model Bundle {
 - **Embed**: YouTube, Vimeo, Bunny Stream, Mux — just a URL
 - **Player**: native embed or custom wrapper for playback controls
 - **No self-hosting**: video storage/transcoding out of scope
-
-### Tablatures
-
-- **Format**: PDF or image URL
-- **Display**: simple viewer (PDF.js or `<img>`)
-- **No parsing**: Guitar Pro / ASCII rendering is future scope
 
 ## Design / UX
 
