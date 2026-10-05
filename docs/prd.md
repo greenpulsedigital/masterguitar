@@ -36,12 +36,13 @@ Les profs de guitare indépendants veulent monétiser leur expertise en ligne ma
 - **Multi-devises / TVA automatique** — compliance fiscale = projet à part entière, le prof gère sa compta
 - **Coaching 1:1 / prise de RDV** — Calendly existe, pas de valeur à intégrer
 - **Email marketing intégré** — Mailchimp/ConvertKit font ça mieux, on intègre via webhook
+- **Tablatures intégrées** — retirées du périmètre le 2026-10-05 : jugées inutiles et peu esthétiques (décision produit)
 
 ### The angle (done differently / better)
 1. **Commission 0%** — abonnement mensuel fixe pour le prof, il garde 100% des ventes (moins Stripe ~2.9%)
 2. **Design premium "studio"** — visuels, ambiance pensée pour musiciens, pas un template SaaS générique
 3. **Mobile-first** — l'expérience élève est conçue pour le téléphone (apprendre avec la guitare sur les genoux)
-4. **Outils spécifiques guitare** — tablatures intégrées, ralenti vidéo, boucles de sections
+4. **Outils spécifiques guitare** — ralenti vidéo, boucles de sections
 
 ## Constraints
 - **Stack** : Next.js + React
@@ -52,6 +53,6 @@ Les profs de guitare indépendants veulent monétiser leur expertise en ligne ma
 1. Un prof peut créer un cours vidéo (modules/chapitres) et le mettre en vente en **moins de 30 minutes**
 2. Un élève peut acheter (one-shot ou abo) et accéder **immédiatement** à son espace
 3. Le prof touche **100% du paiement** (moins frais Stripe ~2.9%)
-4. Les outils guitare fonctionnent : **tablatures, ralenti vidéo, boucles**
+4. Les outils guitare fonctionnent : **ralenti vidéo, boucles**
 5. Le design est perçu comme **premium vs Podia** (test utilisateur qualitatif)
 6. **Mobile-first** : l'expérience élève est fluide sur téléphone
