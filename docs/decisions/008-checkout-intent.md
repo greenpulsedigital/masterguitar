@@ -1,6 +1,6 @@
 # ADR 008 — Intention de checkout persistée
 
-- Status: accepted
+- Status: superseded by ADR 009 (2026-10-29)
 - Date: 2026-10-05
 - Scope: story s20-checkout-per-prof
 

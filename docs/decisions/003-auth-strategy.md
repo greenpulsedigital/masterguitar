@@ -1,6 +1,6 @@
 # ADR 003 — Stratégie d'authentification
 
-- Status: accepted
+- Status: accepted (roles amended by ADR 011, 2026-10-29)
 - Date: 2026-07-31
 - Scope: framing
 

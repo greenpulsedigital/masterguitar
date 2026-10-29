@@ -1,6 +1,6 @@
 # ADR 002 — SQLite for local development
 
-- Status: accepted
+- Status: superseded by ADR 010 (2026-10-29)
 - Date: 2026-07-31
 - Scope: framing
 - Supersedes: ADR 001 (database section only)

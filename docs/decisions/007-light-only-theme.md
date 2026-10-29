@@ -1,7 +1,7 @@
 # ADR 007: Light-only "Bois & Ambre" Theme
 
 ## Status
-Accepted — supersedes the dark "Studio" identity set during s01-project-foundation.
+Superseded by ADR 013 (2026-10-29). Was: accepted — supersedes the dark "Studio" identity set during s01-project-foundation.
 
 ## Context
 

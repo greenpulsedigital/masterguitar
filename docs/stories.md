@@ -3,6 +3,23 @@
 > One story = one shippable slice, written to be executed by an agent.
 > Id format: `s<number>-<short-slug>` — reused in every pipeline file and in the branch name.
 
+## Recadrage v2 (2026-10-29)
+
+Le PRD v2 (`docs/prd.md`, ADR 009 à 013) remplace la vente de cours aux élèves par des espaces de cours privés et un abonnement du professeur. Les stories s01 à s20 restent ci-dessous pour l'historique ; leur statut v2 :
+
+| Story | État au 2026-10-29 | Statut v2 |
+|---|---|---|
+| s01-project-foundation | livrée | Réutilisée (bascule PostgreSQL dans s21, thème dans le design system v2) |
+| s02-prof-auth | livrée | Réutilisée (connexion, inscription, sessions) ; rôle global remplacé par ADR 011 |
+| s03-course-crud, s04-course-structure, s05-video-lessons | livrées | Gelées ; réservoir de patterns pour s27 (ordre, formulaires, actions) |
+| s06-sales-page | livrée | Gelée (vente élève hors MVP) |
+| s07-stripe-checkout | fusionnée, `Ship allowed: no` | Gelée (ADR 009) |
+| s08 à s18 | non commencées | Abandonnées ou reportées après MVP (s11/s14 outils guitare et tablature → P1 ; s15 forum → remplacé par s30/s31) |
+| s19-prof-stripe-account | fusionnée, revue en cours | Gelée (ADR 009) ; chiffrement et limitation de débit réutilisables |
+| s20-checkout-per-prof | planifiée, non commencée | Abandonnée (ADR 009) |
+
+Les nouvelles stories s21 à s45 suivent les lots du dossier v2 (M1 à M6). M0 n'est pas une story : c'est l'audit et les preuves terrain décrits dans `docs/m0-audit.md`.
+
 ---
 
 ## Story s01-project-foundation — Setup technique
@@ -531,3 +548,576 @@ s07-stripe-checkout, s19-prof-stripe-account
 - **À trancher dans le plan** : (a) *intention de checkout persistée* (prof, cours, acheteur, montant, devise, mode) que le webhook revérifie — protège contre une session créée avec un montant arbitraire via une clé compromise, au prix d'une table et de code ; sinon le montant reste seulement contrôlé `> 0` et en `eur` ; (b) idempotence par `event.id` en plus de la session (table d'événements traités), aujourd'hui non requise.
 - Périmètre : paiement unique uniquement ; les abonnements (`customer.subscription.*`) relèvent de `s13-subscriptions`, qui dépend de cette story.
 - Référence Podia : flow d'achat
+
+---
+
+# Stories v2 — MVP espaces de cours (recadrage du 2026-10-29)
+
+> Exigences du dossier v2 citées entre crochets (ACC, PAR, AUD, MET, COM, EXT, PLN, BIL, DAT, UX). Toute story d'espace applique ADR 011 : gardes de `src/server/authz/`, FK composites `(accountId, spaceId, …)`, tests à deux professeurs et deux espaces.
+
+---
+
+## Story s21-postgres-switch — Passage à PostgreSQL
+
+**As a** développeur **I want** que dev, CI et production utilisent PostgreSQL **so that** les verrous, FK composites et contraintes du MVP soient testés sur la vraie base.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] `prisma/schema.prisma` utilise le provider `postgresql` ; une migration de base PostgreSQL remplace l'historique SQLite
+- [ ] `npm run dev`, `npm test` et `npm run build` fonctionnent contre un PostgreSQL local documenté (README + `.env.example`)
+- [ ] La CI démarre un service PostgreSQL éphémère et les jobs « Types, tests and build » et « Lint » restent verts
+- [ ] Les 408 tests existants passent (ou les écarts sont justifiés dans la revue)
+- [ ] Un test d'intégration prouve qu'une transaction interactive avec `SELECT … FOR UPDATE` sérialise deux écritures concurrentes
+- [ ] `dev.db` et l'adaptateur libsql ne sont plus nécessaires
+
+### Dependencies
+Aucune (premier lot M1)
+
+### Agentic notes
+- ADR 010. Prisma 7 : lire `node_modules/next/dist/docs/` et la doc Prisma 7 (adaptateur `@prisma/adapter-pg` ou driver natif) avant de changer `src/lib/prisma.ts` et `prisma.config.ts`.
+- Vérifier qu'aucune donnée réelle n'existe en SQLite (dev uniquement) avant d'abandonner l'historique de migrations ; garder une sauvegarde de `dev.db` hors dépôt.
+- Les migrations SQLite existantes (`prisma/migrations`) ne sont pas rejouables sur PostgreSQL : générer une migration initiale depuis le schéma courant.
+- Les dossiers vides `docs/* 2`, `docs/* 3`, `prisma/migrations 2|3` et `.claude/skills/* 2|3` sont des doublons Finder : les supprimer dans cette story si confirmés vides.
+
+---
+
+## Story s22-email-verification — Vérification d'adresse et e-mails transactionnels
+
+**As a** utilisateur **I want** vérifier mon adresse e-mail **so that** une invitation ne puisse être acceptée que par son vrai destinataire.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Après inscription, un e-mail de vérification à jeton hashé et expirant est envoyé ; le jeton est à usage unique
+- [ ] `User.emailVerifiedAt` est renseigné seulement après consommation du jeton
+- [ ] Un jeton expiré, déjà utilisé ou falsifié affiche un message générique et permet un nouvel envoi limité en débit
+- [ ] Les envois passent par un adaptateur `src/server/providers/email.ts` ; en dev/CI, un transport de test capture les messages (aucun envoi réel)
+- [ ] Aucun jeton en clair n'est journalisé ni stocké
+
+### Dependencies
+s21-postgres-switch
+
+### Agentic notes
+- Réutiliser `src/lib/rate-limit.ts` (s19) pour les renvois.
+- Fournisseur d'envoi à qualifier en M0 (SMTP Infomaniak candidat) ; variables serveur uniquement.
+- La retouche de l'écran d'inscription passe par le design system v2.
+
+---
+
+## Story s23-plan-catalog — Catalogue de plans et plan effectif
+
+**As a** exploitant **I want** des plans versionnés avec leurs fonctionnalités et quotas **so that** aucune limite ni aucun prix ne soit codé dans l'interface [PLN-01].
+
+### Complexity
+2
+
+### Acceptance criteria
+- [ ] Modèles `Plan` (key, version, published), `PlanPrice` (montant en centimes, devise, `stripePriceId` nullable, environnement test/live) et `PlanEntitlement` (featureKey allowlistée, enabled, limitValue, unit), unicité `(key, version)` et `(planId, featureKey)`
+- [ ] Un seed crée le plan gratuit (sans prix payant) et des plans payants de **recette** marqués comme hypothèses
+- [ ] `getEffectivePlan(accountId)` est calculé au serveur et renvoie fonctionnalités et quotas ; le métronome local n'est jamais une fonctionnalité limitée
+- [ ] Un accès pilote (octroi explicite d'une fonctionnalité à un compte testeur) est possible et enregistré dans le journal d'audit ; il n'est pas présenté comme un abonnement
+- [ ] Aucun composant ne contient de montant ni de quota en dur (vérifié par test ou lint ciblé)
+
+### Dependencies
+s21-postgres-switch
+
+### Agentic notes
+- Clés de fonctionnalité du dossier : `spaces`, `student_seats`, `audio_assignments`, `shared_metronome`, `audio_storage_bytes`, `custom_branding`.
+- Créer ici `AuditEvent` (acteur, action, cible, requestId, métadonnées minimales, append-only) réutilisé ensuite.
+- Le plan effectif dépendra des abonnements (s41) ; prévoir la fonction sans Stripe pour l'instant.
+
+---
+
+## Story s24-teacher-account-spaces — Compte professeur et espaces de cours
+
+**As a** professeur **I want** créer mon compte professeur et un espace de cours **so that** j'organise mes élèves dans un lieu privé [ACC-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Modèles `TeacherAccount` (owner unique au MVP, statut, plan effectif et version) et `CourseSpace` (accountId, nom, slug unique par compte, statut draft/active/read_only/archived)
+- [ ] La création d'espace vérifie le quota `spaces` dans une transaction qui verrouille le compte ; deux créations concurrentes ne dépassent pas la limite
+- [ ] Module `src/server/authz/` : `getActor`, `ownsAccount`, `ownsSpace`, `isSpaceMember` relus en base ; le rôle du JWT n'est jamais lu
+- [ ] Un professeur B qui appelle une action ou une page avec l'identifiant d'un espace de A obtient une réponse « introuvable »
+- [ ] Les espaces listés sont uniquement ceux possédés ou rejoints par l'utilisateur
+
+### Dependencies
+s22-email-verification, s23-plan-catalog
+
+### Agentic notes
+- ADR 011. Les profs existants (`role = PROF`) reçoivent un `TeacherAccount` par migration de données additive.
+- Préparer la convention FK composite : `@@unique([accountId, id])` sur `CourseSpace` et FK `(accountId, spaceId)` sur les tables enfants (SQL dans la migration si Prisma ne l'exprime pas).
+- UI minimale (formulaire de création) ; le cadre complet arrive avec s25.
+
+---
+
+## Story s25-space-shell — Cadre de navigation façon Discord
+
+**As a** professeur ou élève **I want** un rail d'espaces, des rubriques et un panneau de contexte **so that** je sache toujours dans quel espace et quelle rubrique je suis [UX-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Rail des espaces autorisés (nom accessible pour chaque initiale), navigation de l'espace par groupes Apprendre / Classe / Outils, centre, contexte repliable
+- [ ] Le groupe « Gestion » (Élèves, Contenus, Offre et usage) n'est rendu que pour le propriétaire, et les routes correspondantes refusent un élève côté serveur
+- [ ] Sur mobile : un seul contenu principal, tiroirs avec focus piégé, fermeture par Échap et retour du focus au déclencheur
+- [ ] États vides réels (aucun espace, aucun parcours) sans fausses données
+- [ ] Navigation au clavier de bout en bout ; contrastes des tokens v2 vérifiés
+
+### Dependencies
+s24-teacher-account-spaces ; design system v2 réécrit (`/ks-design-system`, ADR 013)
+
+### Agentic notes
+- Story avec interface : `/ks-design` obligatoire, sur la base du wireframe `assets/direction-discord.svg` du dossier v2.
+- Routes proposées : `/espaces`, `/espaces/[spaceId]/accueil` ; composants `SpaceRail`, `SpaceNavigation`, `WorkspaceHeader`, `ContextPanel`.
+- Pas de violet Discord, pas de présence globale, pas de badges en cascade.
+
+---
+
+## Story s26-student-invitations — Invitations et places d'élèves
+
+**As a** professeur **I want** inviter des élèves dans la limite de mon offre **so that** ils rejoignent mon espace sans dépasser mon quota [ACC-02, PLN-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Modèles `StudentSeat` (reserved/active/released, clé d'adresse normalisée par HMAC serveur), `SpaceInvitation` (hash du jeton, expiration, révocation, acceptation) et `SpaceEnrollment` (unique espace/utilisateur)
+- [ ] Créer une invitation réserve une place dans une transaction qui verrouille le compte ; deux invitations simultanées sur la dernière place n'en créent qu'une
+- [ ] Un élève déjà compté sur ce compte ne consomme pas de seconde place en rejoignant un autre espace du même professeur
+- [ ] L'acceptation exige une session dont l'adresse **vérifiée** correspond ; elle est atomique et à usage unique ; mauvais compte, jeton expiré ou révoqué donnent un message clair sans révéler l'espace
+- [ ] Une invitation expirée ou révoquée libère sa place réservée si aucune inscription active ne l'utilise
+- [ ] À la limite : message avec l'unité et le nombre de places, saisie conservée, liens vers gestion des invitations et offres ; rien n'est envoyé
+- [ ] Écran Élèves et places : réservées, actives, expirées, archivage d'une inscription
+
+### Dependencies
+s25-space-shell
+
+### Agentic notes
+- **Risque (complexité 4)** : concurrence et cohérence place/inscription. Tests d'intégration PostgreSQL obligatoires (deux transactions parallèles).
+- Expiration : job ou vérification paresseuse à la lecture ; à trancher au plan. Prévoir `OutboxJob` si l'envoi d'e-mail d'invitation est asynchrone.
+- Route `/invitation/[token]` ; le jeton n'apparaît jamais dans les journaux.
+
+---
+
+## Story s27-learning-paths — Éditeur de parcours, modules et étapes
+
+**As a** professeur **I want** construire un parcours en modules et étapes, puis le publier **so that** mes élèves aient une progression claire [PAR-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Modèles `LearningPath` (draft/published/archived, version), `PathModule` et `PathStep` (kind read/practice/audio_assignment, consigne, position) avec FK composites vers l'espace
+- [ ] Ordre persistant et réordonnancement transactionnel ; un ordre concurrent produit un conflit explicite, pas un ordre corrompu
+- [ ] Brouillon et publication distincts ; un élève ne voit jamais un brouillon (test)
+- [ ] Après publication, ajouter une étape conserve les identifiants existants
+- [ ] Une étape qui a des rendus est archivée, jamais supprimée
+- [ ] Aperçu « comme élève » pour le professeur ; statut de sauvegarde distinct de la publication ; saisie conservée en cas d'échec
+
+### Dependencies
+s25-space-shell
+
+### Agentic notes
+- **Risque (complexité 4)** : versionnement de la publication. Recherche à trancher : nouvelles tables v2 (recommandé, ADR 009) ou reprise de `Course/Module/Lesson` gelés ; réutiliser au minimum les patterns d'ordre et de formulaires de s03/s04.
+- Story avec interface : `/ks-design` (écran S04 du dossier).
+
+---
+
+## Story s28-path-reader-progress — Lecture d'étape et progression de l'élève
+
+**As a** élève **I want** retrouver ma prochaine étape et marquer celles que j'ai faites **so that** je sache quoi pratiquer sans relire un fil [PAR-02].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Accueil d'espace : prochaine étape non réalisée du parcours publié, ou état vide « Ton professeur n'a pas encore publié de parcours »
+- [ ] `StepProgress` (inscription, étape, todo/done) : l'élève ne modifie que sa propre progression, sur une étape publiée de son espace
+- [ ] Progression persistante entre appareils ; aucune comparaison ni classement entre élèves
+- [ ] Le professeur voit une synthèse minimale par élève (étapes réalisées)
+- [ ] Un élève non inscrit ou révoqué ne lit pas le parcours (test)
+
+### Dependencies
+s27-learning-paths
+
+### Agentic notes
+- Écrans S03 et S05 du dossier. Pas de WebSocket ni de polling pour la lecture.
+
+---
+
+## Story s29-step-resources — Stockage privé et ressources d'étape
+
+**As a** professeur **I want** joindre un PDF, une image ou un lien à une étape **so that** mes supports existants accompagnent la consigne.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Adaptateur `src/server/providers/storage.ts` (URL présignées PUT/GET courtes, clé d'objet opaque) avec implémentation locale pour dev/CI ; aucun autre module ne connaît le fournisseur
+- [ ] Modèles `Resource` et `StepResource` (même espace) ; type et taille vérifiés au serveur après transfert ; types et tailles maximales configurés
+- [ ] Les liens externes sont en HTTPS, validés, jamais récupérés côté serveur ni prévisualisés automatiquement
+- [ ] Un élève ne lit une ressource que via une étape publiée de son espace ; URL de lecture courte, jamais stockée
+- [ ] Une ressource d'un autre espace ne peut pas être rattachée (test)
+
+### Dependencies
+s27-learning-paths
+
+### Agentic notes
+- ADR 012. Ce socle de stockage est réutilisé par les rendus audio (s34).
+- Réponses privées en `Cache-Control: no-store`.
+
+---
+
+## Story s30-class-threads — Fils de classe
+
+**As a** membre d'un espace **I want** lire les annonces du professeur, poser des questions et répondre **so that** la classe échange sans flux global [COM-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] `ClassThread` (annonce réservée au professeur, question pour les membres actifs) et `ClassComment`, limités à l'espace
+- [ ] Pagination par curseur stable ; taille et cadence des messages bornées (limitation de débit)
+- [ ] Aucun fichier audio de devoir ne peut être joint ou référencé dans un fil
+- [ ] Pas de messagerie entre élèves, pas de push, pas de compteur global ni de `@everyone`
+- [ ] Un membre d'un autre espace ne lit ni n'écrit (test)
+
+### Dependencies
+s25-space-shell
+
+### Agentic notes
+- Écran S08. Les notifications e-mail sobres viendront avec l'outbox ; hors périmètre ici si non nécessaires.
+
+---
+
+## Story s31-class-moderation — Signalement et masquage
+
+**As a** professeur **I want** masquer un message signalé **so that** l'espace reste sain, avant toute inclusion de mineurs.
+
+### Complexity
+2
+
+### Acceptance criteria
+- [ ] Un membre peut signaler un fil ou un commentaire avec un motif ; le signalement n'est visible que du professeur
+- [ ] Le professeur masque avec une raison ; l'action est inscrite dans le journal d'audit ; le contenu masqué n'est plus servi aux élèves
+- [ ] Aucune suppression silencieuse
+
+### Dependencies
+s30-class-threads
+
+### Agentic notes
+- Modèle `ModerationReport` avec cibles vérifiées dans le même espace.
+
+---
+
+## Story s32-audio-assignments — Devoirs audio et destinataires
+
+**As a** professeur **I want** créer un devoir audio rattaché à une étape et choisir ses destinataires **so that** chaque élève sache ce qu'il doit rendre [AUD-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] `AudioAssignment` (étape, consigne, draft/published/archived, version de politique) et `AssignmentRecipient` (unique devoir/inscription, même espace)
+- [ ] La publication exige la fonctionnalité `audio_assignments` du plan effectif (ou un accès pilote audité) ; sinon explication, aucun bouton cassé
+- [ ] La consigne affiche durée max, taille max, nombre de tentatives et durée de conservation lues depuis la politique centrale
+- [ ] Rubrique « Mes devoirs » : un élève ne voit que ses attributions
+
+### Dependencies
+s28-path-reader-progress, s23-plan-catalog
+
+### Agentic notes
+- Politique audio versionnée et centralisée (120 s, 5 MiB, 3 tentatives, 90 jours en hypothèse) : une seule source.
+
+---
+
+## Story s33-audio-recorder — Enregistreur local et import
+
+**As a** élève **I want** enregistrer ou importer mon jeu, le réécouter et recommencer **so that** j'envoie seulement ce que j'ai choisi [AUD-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Un contrôleur unique possède micro, MediaRecorder, AudioContext, timers et URL Blob ; il libère tout à l'arrêt, à la fermeture, à l'abandon et si la permission arrive après l'abandon (tests avec périphériques simulés)
+- [ ] Permission demandée uniquement au clic ; refus → aide courte, réessai volontaire ou import, sans boucle
+- [ ] Choix de l'entrée, vumètre, durée, arrêt, réécoute, refaire, copie locale ; rien n'est transféré avant « Envoyer »
+- [ ] Format choisi via `MediaRecorder.isTypeSupported` (Opus ou AAC selon navigateur) ; durée max appliquée à la capture
+- [ ] Import d'un fichier compatible comme alternative ; fichier trop long ou trop lourd → limite expliquée, consigne conservée
+- [ ] Module chargé à la demande (hors JS initial de l'espace)
+
+### Dependencies
+s32-audio-assignments ; matrice codecs/périphériques de M0
+
+### Agentic notes
+- **Risque (complexité 4)** : compatibilité navigateurs. Réemployer la gestion de permission, du niveau et de l'arrêt des pistes du prototype Riff Club Studio (archive `Riff-Club-Studio-source.zip`, tests `audio-lifecycle`).
+- Aucune promesse de survie du Blob après fermeture de l'onglet ; avertir avant navigation.
+- Écran S06, avec l'aide interface USB / ampli virtuel.
+
+---
+
+## Story s34-audio-submission-upload — Envoi fiable et vérification du rendu
+
+**As a** élève **I want** que mon rendu arrive une seule fois et intact **so that** une coupure ou un double clic ne me fasse rien perdre [AUD-01, DAT-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Intention d'envoi au serveur : devoir publié, élève destinataire inscrit, fonctionnalité active, tentatives et quota d'octets réservés atomiquement (`QuotaReservation` avec clé d'idempotence)
+- [ ] Transfert direct vers le stockage par URL présignée courte ; même intention reprise après coupure ; double clic → un seul rendu, une seule tentative consommée
+- [ ] Finalisation serveur : propriétaire de l'objet, type réel, taille et durée relues (jamais celles du client) ; échec → quarantaine puis suppression, professeur sans accès
+- [ ] Le rendu passe à « envoyé » seulement après finalisation sûre ; l'interface distingue transfert et vérification
+- [ ] Intention abandonnée → expiration et libération de la réservation (fenêtre configurable, 10 min en hypothèse)
+- [ ] Fichier falsifié, trop gros, trop long, hors espace ou élève révoqué → refus (tests)
+
+### Dependencies
+s33-audio-recorder, s29-step-resources
+
+### Agentic notes
+- **Risque (complexité 4)** : idempotence et validation. Modèles `AudioSubmission` (unique destinataire/tentative) et `AudioRecording` (clé opaque, codec, durée réelle, statut, expiresAt).
+- Mesure de durée côté serveur : choisir une lecture légère du conteneur (pas de transcodage) au plan.
+- Introduire `OutboxJob` (lease, backoff, déduplication) pour la notification sobre au professeur.
+
+---
+
+## Story s35-audio-feedback — Écoute et retours horodatés
+
+**As a** professeur **I want** commenter un passage précis du rendu et garder une note privée **so that** l'élève sache exactement quoi retravailler [AUD-02].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Lecture après contrôle de droit (auteur ou professeur de l'espace) par URL courte (5 min) avec Range ; aucun autre élève ne reçoit l'URL ni les commentaires
+- [ ] `AudioComment` : offset en millisecondes entières, `0 ≤ offset ≤ durée réelle` garanti en base (fonction ou trigger), brouillon puis publication
+- [ ] « Aller à mm:ss » positionne la lecture sans la lancer ; champ de temps saisissable et liste textuelle équivalente (pas de glisser obligatoire)
+- [ ] `PrivateNote` stockée séparément, jamais présente dans un DTO élève (test sur la réponse sérialisée)
+- [ ] L'élève voit les retours publiés sur son rendu et reçoit un lien, jamais l'audio par e-mail
+
+### Dependencies
+s34-audio-submission-upload
+
+### Agentic notes
+- Écran S07. Waveform facultative, non requise par la story.
+
+---
+
+## Story s36-audio-retention — Expiration et purge des audios
+
+**As a** exploitant **I want** que les audios expirent et soient purgés selon la politique annoncée **so that** le stockage reste borné et les engagements tenus [DAT-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] La date d'expiration est fixée à l'envoi et affichée à l'élève avant envoi et au professeur
+- [ ] Un job purge les objets échus, rejetés ou orphelins (lease, reprise, idempotent) et marque le statut ; un changement de plan ne raccourcit pas la rétention
+- [ ] Après purge, le rendu affiche « audio expiré » et les retours textuels selon la politique, sans erreur de lecteur
+- [ ] Alertes : fichier orphelin, job ancien, quota incohérent
+
+### Dependencies
+s35-audio-feedback
+
+### Agentic notes
+- Le worker tourne sur l'hébergement retenu : qualifier en M0 la possibilité d'un processus ou d'une tâche planifiée chez Infomaniak.
+
+---
+
+## Story s37-local-metronome — Métronome local
+
+**As a** élève ou professeur **I want** un métronome fiable dans l'espace **so that** je pratique au bon tempo, même sur le plan gratuit [MET-01].
+
+### Complexity
+2
+
+### Acceptance criteria
+- [ ] Tempo (30–240), mesure (2–7), volume, marche/arrêt accessibles au clavier ; aucun son sans geste explicite
+- [ ] Clics programmés en avance sur l'horloge `AudioContext` (un intervalle JS ne sert qu'à remplir le planning) ; régularité testée
+- [ ] Repère visuel doux, désactivable, respectant `prefers-reduced-motion`
+- [ ] Arrêt et sortie ferment timers et AudioContext ; complet sur le plan gratuit
+
+### Dependencies
+s25-space-shell
+
+### Agentic notes
+- Réemployer le moteur du prototype (tests `music`, `pupitre`). Domaine pur dans `src/domain/music/`.
+
+---
+
+## Story s38-tool-sessions — Sessions d'outils et lien de visio externe
+
+**As a** professeur **I want** ouvrir une session d'outils avec le lien de mon appel externe **so that** mes élèves rejoignent la visio et les outils au même endroit [EXT-01].
+
+### Complexity
+2
+
+### Acceptance criteria
+- [ ] `ToolSession` (prepared/open/closed, epoch) et `ToolSessionMember` (élèves admis explicitement)
+- [ ] Lien HTTPS validé (protocole, longueur, hôte), texte échappé, jamais récupéré côté serveur ni intégré ; ouverture volontaire dans un nouvel onglet avec le nom du service
+- [ ] L'interface n'affiche aucun statut de connexion à l'appel externe
+- [ ] Seuls les élèves admis voient le lien (test)
+
+### Dependencies
+s37-local-metronome, s26-student-invitations
+
+### Agentic notes
+- Allowlist de fournisseurs (Jitsi, Meet, Zoom) et exceptions à décider au plan.
+
+---
+
+## Story s39-shared-metronome-state — État partagé du métronome
+
+**As a** professeur **I want** régler tempo, départ et arrêt pour toute la session **so that** chaque élève suive la même consigne de tempo [MET-02].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] `MetronomeState` (revision, schemaVersion, tempoBpm, beatsPerBar, stopped/running, startAtServerMs, countInBars) et `ControlMutation` (session, mutationId) pour l'idempotence
+- [ ] `PUT` d'état réservé au propriétaire, avec `expectedRevision` ; révision périmée → 409 ; même `mutationId` rejoué → même résultat
+- [ ] Le serveur fixe le départ futur (+2 s en hypothèse) ; `GET /time` renvoie l'heure serveur
+- [ ] La fonctionnalité `shared_metronome` du plan est exigée ; le métronome local reste disponible sans elle
+- [ ] Un élève ne peut émettre aucune commande (test)
+
+### Dependencies
+s38-tool-sessions
+
+### Agentic notes
+- Le contrat du dossier v2 (TRD §6) fait référence ; charge ≤ 2 KiB.
+
+---
+
+## Story s40-shared-metronome-sync — Diffusion temps réel et clic synchronisé
+
+**As a** élève **I want** que mon clic local démarre au moment fixé par le professeur **so that** nous jouions ensemble au plus près, sans flux audio [MET-02].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Canal temps réel privé par session et epoch, ouvert seulement pendant l'usage de l'outil ; publication uniquement par le serveur après commit
+- [ ] Estimation du décalage d'horloge par plusieurs échanges (échantillons à faible RTT) et correspondance avec l'horloge audio
+- [ ] Le client n'applique qu'une révision plus récente, relit l'API après coupure et propose le prochain début de mesure au lieu d'une rafale de rattrapage
+- [ ] Écart affiché (« non aligné ») et action « Se recaler » ; l'élève peut couper son son sans arrêter les autres ; « Arrêter pour tous » réservé au professeur
+- [ ] Révocation : rotation de l'epoch, l'ancien canal ne reçoit plus de contrôle ; sortie → canal, timers et AudioContext fermés
+- [ ] Aucun message par battement ; aucune piste audio transportée (inspection réseau)
+
+### Dependencies
+s39-shared-metronome-state ; preuve de timing M0
+
+### Agentic notes
+- **Risque (complexité 4)** : choix du transport temps réel (WebSocket dédié, SSE + API, ou service managé) à trancher par ADR dans la recherche, selon ce que l'hébergement Infomaniak supporte (M0).
+- Aucune promesse de synchronisation parfaite dans les textes.
+
+---
+
+## Story s41-teacher-subscription — Abonnement professeur
+
+**As a** professeur **I want** passer à une offre payante **so that** j'aie plus d'élèves, les devoirs audio et le métronome partagé [BIL-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] Écran Offre et usage : usage (places réservées/actives, espaces, stockage) et comparaison des plans publiés, montants lus du catalogue
+- [ ] Checkout en mode abonnement créé au serveur avec le `stripePriceId` du plan choisi et le client Stripe du compte ; jamais un montant venant du client
+- [ ] Webhook `/api/webhooks/stripe` : signature sur corps brut, `WebhookInbox` (unicité provider/événement), traitement idempotent et ordre indifférent (relecture canonique de l'abonnement)
+- [ ] Le plan premium n'est actif qu'après rapprochement facture payée + abonnement éligible ; le simple retour de Checkout affiche « confirmation en cours »
+- [ ] Modèles `Subscription` et `BillingInvoice` (factures du professeur uniquement)
+- [ ] Un élève ne voit aucune information de facturation (test)
+
+### Dependencies
+s23-plan-catalog, s26-student-invitations
+
+### Agentic notes
+- **Risque (complexité 4)** : ADR 009. L'ancienne route `/api/webhooks/stripe` (s07, gelée) est à remplacer ou renommer : trancher dans la recherche, sans casser les tests gelés sans le dire.
+- Tests sans appel Stripe réel ; dépôt public : jamais de clé, même factice, en clair (assembler à l'exécution).
+
+---
+
+## Story s42-billing-lifecycle — Portail, impayé, résiliation et retour au gratuit
+
+**As a** professeur **I want** gérer ou résilier mon abonnement sans perdre mes contenus **so that** je reste maître de mon offre [BIL-01, PLN-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Accès au portail client Stripe ; résiliation à échéance avec date de fin claire
+- [ ] `past_due` → période de grâce configurable (7 jours en hypothèse) et message discret au professeur seulement
+- [ ] Retour au gratuit : contenus lisibles et exportables, nouvelles créations bornées, choix de l'espace actif, nouveaux dépôts audio indisponibles, corrections des rendus déjà reçus toujours possibles
+- [ ] Aucune suppression automatique d'élèves ni de contenus ; rétention audio inchangée
+
+### Dependencies
+s41-teacher-subscription, s36-audio-retention
+
+### Agentic notes
+- Écran S12 complet (gratuit, confirmation en cours, actif, grâce, résiliation, retour gratuit).
+
+---
+
+## Story s43-data-export-deletion — Export et suppression des données
+
+**As a** utilisateur **I want** exporter mes données et supprimer mon compte **so that** j'exerce mes droits sans payer [DAT-01].
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Export (professeur : espaces, parcours, retours ; élève : progression, rendus encore conservés, retours) disponible 7 jours, sans abonnement requis
+- [ ] Suppression orchestrée : détachement de l'identité, anonymisation des références à conserver, purge des données sans base de conservation, factures conservées selon politique
+- [ ] Journaux sans audio, notes, jetons ni URL signées (test sur le format des logs)
+
+### Dependencies
+s42-billing-lifecycle
+
+### Agentic notes
+- Écran S13. Politique de conservation des factures à confirmer (conseil compétent).
+
+---
+
+## Story s44-pilot-readiness — Recette et préparation du pilote
+
+**As a** exploitant **I want** une version candidate vérifiée et des procédures d'exploitation **so that** le pilote démarre sans risque de perte ou de fuite.
+
+### Complexity
+3
+
+### Acceptance criteria
+- [ ] Audit RGAA ciblé des parcours critiques et corrections bloquantes faites ; aucune conformité globale annoncée
+- [ ] Exercice de restauration base + objets réussi et chronométré (RPO 24 h, RTO 4 h visés)
+- [ ] Runbooks : paiement non rapproché, fichier rejeté/orphelin, incident de confidentialité, modération, rollback
+- [ ] Budgets mesurés (JS initial ≤ 180 KiB, LCP/INP/CLS, P95 API) et écarts documentés
+- [ ] Environnements dev / recette / production séparés, secrets dédiés
+
+### Dependencies
+s43-data-export-deletion, s40-shared-metronome-sync
+
+### Agentic notes
+- Story essentiellement d'exploitation : le plan liste des vérifications plutôt que du code.
+
+---
+
+## Story s45-minor-authorization — Parcours d'autorisation pour élèves mineurs
+
+**As a** élève mineur et son responsable légal **I want** une information adaptée et une autorisation vérifiable **so that** je puisse participer dans un cadre conforme [DAT-01].
+
+### Complexity
+4
+
+### Acceptance criteria
+- [ ] **Bloquée** tant que le protocole d'information/autorisation n'est pas validé par David et un conseil compétent ; aucun critère ne sera écrit avant
+- [ ] Aucune date de naissance complète ni pièce d'identité collectée par défaut
+
+### Dependencies
+Protocole juridique validé ; s34-audio-submission-upload
+
+### Agentic notes
+- Modèle cible du dossier : `MinorAuthorization` (finalité, statut, version de politique, preuve minimale). Ne pas commencer sans protocole.

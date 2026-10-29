@@ -1,6 +1,6 @@
 # ADR 004 — Flow de paiement
 
-- Status: accepted
+- Status: superseded by ADR 009 (2026-10-29)
 - Date: 2026-07-31
 - Scope: framing
 
